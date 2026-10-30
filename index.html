@@ -133,7 +133,8 @@ ${inp('num','N° de facture',i.num)}<div class="g">${inp('dt','Date',i.date||tod
 <div class="g">${inp('mt','Montant (TND)',i.montant,'number')}${inp('pa','Montant payé',i.paye||0,'number')}</div>
 ${sel('na','Nature',['Prestation','Pièces','Prestation + Pièces'].map(x=>[x,x]),i.nature)}${sel('rp','Rapport d’intervention signé',['Non','Oui'].map(x=>[x,x]),i.rapport)}${inp('te','Nom du technicien',i.tech)}${ta('av','Avis technique',i.avis)}
 <button onclick="svInv('${id||''}')">Enregistrer</button><button class="sec" onclick="closeM()">Annuler</button>`)}
-async function svInv(id){if(!v('num')||!v('dt')||!(+v('mt')>0))return alert('N°, date et montant obligatoires.');
+const nn=x=>String(x||'').trim().toUpperCase().replace(/\s+/g,'');
+async function svInv(id){if(!v('num')||!v('dt')||!(+v('mt')>0))return alert('N°, date et montant obligatoires.');const dbl=S.invoices.find(x=>x.id!==id&&nn(x.num)===nn(v('num')));if(dbl)return alert('La facture n° '+dbl.num+' existe déjà (client : '+cname(dbl.client)+').');
 const d={client:v('cl'),cell:v('ce'),num:v('num'),date:v('dt'),echeance:v('ec')||v('dt'),montant:+v('mt'),paye:+v('pa')||0,nature:v('na'),rapport:v('rp'),tech:v('te'),avis:v('av')};
 await db.doc('invoices/'+(id||db.collection('invoices').doc().id)).set(d);closeM()}
 function v_inv(){const l=invF().filter(i=>!q||(i.num+cname(i.client)).toLowerCase().includes(q.toLowerCase())).sort((a,b)=>late(b)-late(a));
@@ -219,11 +220,11 @@ let pvH='';function setPv(h){pvH=h;const e=$('#pv');if(e)e.innerHTML=h}
 function impF(f,only){if(!f)return;const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'array'}),rows=n=>{const sh=wb.Sheets[n]||(only==n?wb.Sheets[wb.SheetNames[0]]:null);return sh?XLSX.utils.sheet_to_json(sh):[]},er=[],cl=[],iv=[],known=new Set(S.clients.map(c=>c.rs.toLowerCase()));
 rows('Clients').forEach((x,k)=>{const rs=String(x['Raison sociale']||'').trim();if(!rs)return er.push('Clients ligne '+(k+2)+' : raison sociale vide');if(known.has(rs.toLowerCase()))return;known.add(rs.toLowerCase());
 cl.push({rs,mf:x['Matricule fiscal']||'',rue:x['Rue']||'',ville:x['Ville']||'',cp:x['Code postal']||'',pays:x['Pays']||'Tunisie',em:String(x['E-mails']||'').split(';').map(s=>s.trim()).filter(Boolean),tel:tels(String(x['Téléphones']||'').split(';').join('\n')),ct:x['Contact']||'',nt:x['Note']||''})});
-const nums=new Set(S.invoices.map(i=>i.num));
+const nums=new Set(S.invoices.map(i=>nn(i.num)));let dup=0;
 rows('Factures').forEach((x,k)=>{const c=String(x['Cellule']||'').toUpperCase().trim(),n=String(x['N° facture']||'').trim(),cn=String(x['Client']||'').trim(),mt=+x['Montant'];
-if(!CELLS.includes(c))return er.push('Factures ligne '+(k+2)+' : cellule invalide');if(!n||!(mt>0)||!pd(x['Date']))return er.push('Factures ligne '+(k+2)+' : n°, date ou montant invalide');if(!known.has(cn.toLowerCase()))return er.push('Factures ligne '+(k+2)+' : client inconnu');if(nums.has(n))return;nums.add(n);
+if(!CELLS.includes(c))return er.push('Factures ligne '+(k+2)+' : cellule invalide');if(!n||!(mt>0)||!pd(x['Date']))return er.push('Factures ligne '+(k+2)+' : n°, date ou montant invalide');if(!known.has(cn.toLowerCase()))return er.push('Factures ligne '+(k+2)+' : client inconnu');if(nums.has(nn(n))){dup++;return}nums.add(nn(n));
 iv.push({cn,cell:c,num:n,date:pd(x['Date']),echeance:pd(x['Échéance'])||pd(x['Date']),montant:mt,paye:+x['Payé']||0,nature:x['Nature']||'Prestation',rapport:x['Rapport signé']||'Non',tech:x['Technicien']||'',avis:x['Avis technique']||''})});
-pend={cl,iv};setPv(`<p><b>${cl.length}</b> nouveau(x) client(s), <b>${iv.length}</b> nouvelle(s) facture(s).</p>${er.length?'<p class="err">'+er.slice(0,15).map(E).join('<br>')+'</p>':''}<button onclick="okImp()">Valider l’import</button> <button class="sec" onclick="setPv('')">Annuler</button>`)};r.readAsArrayBuffer(f)}
+pend={cl,iv};setPv(`<p><b>${cl.length}</b> nouveau(x) client(s), <b>${iv.length}</b> nouvelle(s) facture(s).${dup?` <br>${dup} facture(s) ignorée(s) : numéro déjà existant.`:''}</p>${er.length?'<p class="err">'+er.slice(0,15).map(E).join('<br>')+'</p>':''}<button onclick="okImp()">Valider l’import</button> <button class="sec" onclick="setPv('')">Annuler</button>`)};r.readAsArrayBuffer(f)}
 async function okImp(){const ids={};S.clients.forEach(c=>ids[c.rs.toLowerCase()]=c.id);for(const c of pend.cl){const r=db.collection('clients').doc();ids[c.rs.toLowerCase()]=r.id;await r.set(c)}
 for(const i of pend.iv){const{cn,...d}=i;await db.collection('invoices').doc().set({...d,client:ids[cn.toLowerCase()]})}pend=null;setPv('<p><b>Import terminé ✅</b></p>')}
 
