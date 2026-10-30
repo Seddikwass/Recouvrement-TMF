@@ -44,6 +44,7 @@ input,select,textarea{width:100%;font:17px var(--f);color:#111;padding:9px;borde
 footer{position:fixed;left:0;right:0;bottom:0;background:#0a2a5c;border-top:1px solid #2a3a63;color:#fff;text-align:center;font-weight:900;padding:12px 8px calc(12px + env(safe-area-inset-bottom,0px));letter-spacing:1px;z-index:10}
 .lg span{display:inline-block;margin-right:14px}.lg i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:4px;vertical-align:middle}
 .err{color:var(--r);font-weight:700}
+.alG{background:#1e9e45;color:#fff;border:2px solid #fff}.gB{display:inline-block;background:#1e9e45;color:#fff;font-weight:800;font-size:13px;border-radius:6px;padding:2px 8px;margin-top:4px}.gS{color:#1e7d34;font-weight:700}tr.rG td{background:#dcf5e3}button.gr{background:#1e9e45}
 .hi{overflow-x:auto}.hi h2{color:#D40005}.hi p,.hi td{color:#000;font-weight:600}.hi table{min-width:0;border:2px solid #D40005}.hi th{background:#D40005;color:#000;font-weight:900}.hi td{background:#ffe1e1;border-bottom:1px solid #f3a3a3}.hi tr:nth-child(odd) td{background:#ffd0d0}button.hb{background:#D40005;color:#000;font-weight:900}
 .yb{display:inline-block;color:#fff;font-weight:800;border-radius:8px;padding:4px 10px}.ct{min-width:560px}.ct td{border-bottom:1px solid #fff}.ct tr.tt td{color:#fff;font-weight:900;font-size:17px}.yc h2{font-size:21px}
 button.pay{background:#d7ebff;color:#0a2a5c;border:2px solid #0D51A1}
@@ -88,7 +89,15 @@ const sum=a=>a.reduce((s,x)=>s+x,0);
 const cname=id=>(S.clients.find(c=>c.id===id)||{}).rs||'?';
 const lastClose=()=>(new Date().getFullYear()-1)+'-12-31';
 const isE=i=>rest(i)>0&&days(i.echeance||i.date,lastClose())>365;
-const stB=i=>rest(i)<=0?`<span class="pB">✔ PAYÉE</span>${i.datePaiement?'<br><small>le '+fd(i.datePaiement)+'</small>':''}`:status(i);
+const addD=n=>{const d=new Date();d.setDate(d.getDate()+n);return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+function rap(i){if(rest(i)<=0)return null;const l=S.relances.filter(r=>r.inv===i.id).sort((a,b)=>b.ts.localeCompare(a.ts))[0];return l&&l.rappel?{d:l.rappel,note:l.note,ts:l.ts}:null}
+const raps=()=>S.invoices.map(i=>({i,r:rap(i)})).filter(x=>x.r).sort((a,b)=>a.r.d.localeCompare(b.r.d));
+const rapB=i=>{const r=rap(i);if(!r)return'';const t=today();return r.d<=t?`<br><span class="gB">🔔 Rappel ${r.d<t?'en retard ('+fd(r.d)+')':'aujourd’hui'}</span>`:`<br><small class="gS">🔔 Rappel le ${fd(r.d)}</small>`};
+function v_rap(){const t=today(),L=raps(),due=L.filter(x=>x.r.d<=t),next=L.filter(x=>x.r.d>t);
+const row=x=>`<tr class="${x.r.d<=t?'rG':''}"><td><b>${fd(x.r.d)}</b></td><td>${E(x.i.num)}</td><td>${E(cname(x.i.client))}</td><td>${m(rest(x.i))}</td><td>${E(x.r.note||'')}</td><td><button class="sm gr" onclick="fRel('${x.i.id}')">Relancer</button></td></tr>`;
+const tb=l=>l.length?`<table><tr><th>Rappel</th><th>Facture</th><th>Client</th><th>Reste dû</th><th>Dernière note</th><th></th></tr>${l.map(row).join('')}</table>`:'<p>Aucun rappel.</p>';
+return `<div class="card"><h2 style="color:#1e7d34">🔔 Rappels à traiter (${due.length})</h2><p style="font-size:15px">Un rappel disparaît dès qu’une nouvelle relance est enregistrée sur la facture, ou quand la facture est payée.</p>${tb(due)}</div><div class="card"><h2>Rappels à venir (${next.length})</h2>${tb(next)}</div>`}
+const stB=i=>rest(i)<=0?`<span class="pB">✔ PAYÉE</span>${i.datePaiement?'<br><small>le '+fd(i.datePaiement)+'</small>':''}`:status(i)+rapB(i);
 async function payInv(id){if(!admin)return alert('Réservé à l’administrateur.');const i=S.invoices.find(x=>x.id===id);if(!confirm('Marquer la facture '+i.num+' comme payée ('+m(i.montant)+') ?'))return;
 await db.doc('invoices/'+id).set({paye:+i.montant||0,datePaiement:today()},{merge:true});await db.collection('relances').add({inv:id,client:i.client,ts:new Date().toISOString(),canal:'paiement',type:'—',pj:'',note:'Facture marquée payée',user:me})}
 function status(i){if(rest(i)<=0)return'payée';if(isE(i))return'perte potentielle';return +i.paye>0?'partiellement payée':'impayée'}
@@ -173,6 +182,7 @@ modal(`<h2>Relance – facture ${E(i.num)}</h2><p>${E(cname(i.client))} · reste
 <label>ou lien de téléchargement (facultatif)<input id="r_p" placeholder="https://…"></label>
 <p style="font-size:15px">Sur téléphone : « Outlook » ouvre le partage avec les fichiers joints → choisissez <b>Outlook</b>. Les adresses du client sont copiées : collez-les dans « À ». Sur ordinateur : le message s’ouvre dans Outlook, ajoutez le fichier avec le trombone.</p>
 <label>Note client / réponse du client<textarea id="r_n" rows="2"></textarea></label>
+<label>🔔 Date de rappel (prochaine relance)<input type="date" id="r_d" value="${addD(7)}"></label><p style="font-size:14px;margin-top:-4px">Une alerte verte apparaîtra à cette date. Laissez vide pour aucun rappel.</p>
 <button onclick="sendR('${id}','e-mail')">Outlook</button><button onclick="sendR('${id}','WhatsApp')">WhatsApp</button><button onclick="sendR('${id}','téléphone')">Téléphone</button><button class="sec" onclick="sendR('${id}','note')">Noter seulement</button><button class="sec" onclick="closeM()">Fermer</button>`);chT(id)}
 function chT(id){const i=S.invoices.find(x=>x.id===id),k=+$('#r_t').value;$('#r_o').value=(k==8?'Mise en demeure':'Relance')+' – facture '+i.num;$('#r_x').value=fill(P+TY[k][1]+Z,vars(i))}
 async function sendR(id,ch){const i=S.invoices.find(x=>x.id===id),c=S.clients.find(x=>x.id===i.client)||{};const fl=[...($('#r_f').files||[])],k=+$('#r_t').value,pj=[$('#r_p').value.trim(),...fl.map(f=>f.name)].filter(Boolean).join(' · '),note=$('#r_n').value.trim();let txt=$('#r_x').value;
@@ -181,7 +191,7 @@ if(fl.length&&navigator.canShare&&navigator.canShare({files:fl})){try{navigator.
 window.open('https://outlook.office.com/mail/deeplink/compose?to='+encodeURIComponent(c.em.join(';'))+'&subject='+encodeURIComponent($('#r_o').value)+'&body='+encodeURIComponent(txt),'_blank')}
 else if(ch=='WhatsApp'||ch=='téléphone'){const t=ch=='WhatsApp'?((c.tel||[]).find(x=>x.wa)||(c.tel||[])[0]):(c.tel||[])[0];if(!t)return alert('Aucun numéro pour ce client.');let n=t.n.replace(/\D/g,'');if(n.length==8)n='216'+n;
 window.open(ch=='WhatsApp'?'https://wa.me/'+n+'?text='+encodeURIComponent(txt):'tel:+'+n,ch=='WhatsApp'?'_blank':'_self')}
-await db.collection('relances').add({inv:id,client:i.client,ts:new Date().toISOString(),canal:ch,type:k+1,pj,note,user:me});closeM()}
+await db.collection('relances').add({inv:id,client:i.client,ts:new Date().toISOString(),canal:ch,type:k+1,pj,note,user:me,rappel:$('#r_d').value||''});closeM()}
 function hist(id){const i=S.invoices.find(x=>x.id===id)||{},l=S.relances.filter(r=>r.inv===id).sort((a,b)=>b.ts.localeCompare(a.ts));
 modal(`<div class="hi"><h2>Historique des relances</h2><p><b>Facture ${E(i.num)}</b> · ${E(cname(i.client))} · ${l.length} action(s)</p><table><tr><th>Date et heure</th><th>Canal</th><th>Type</th><th>Par</th><th>Réponse client / pièce jointe</th></tr>${l.map(r=>`<tr><td>${fdt(r.ts)}</td><td>${E(r.canal)}</td><td>${r.type}</td><td>${E(String(r.user||'').split('@')[0])}</td><td>${E(r.note)} ${E(r.pj)}</td></tr>`).join('')||'<tr><td colspan="5">Aucune relance.</td></tr>'}</table><button class="sec" onclick="closeM()">Fermer</button></div>`)}
 
@@ -202,7 +212,7 @@ return `<div class="dn"><svg viewBox="0 0 160 160" style="width:230px;max-width:
 function v_dash(){const F=invF(),b12=sum(F.filter(i=>days(i.date,today())<=365).map(i=>+i.montant||0)),imp=sum(F.map(rest)),cy=new Date().getFullYear(),mo=today().slice(0,7);
 const rl=S.relances.filter(r=>r.ts.slice(0,7)===mo&&(!flt||(S.invoices.find(i=>i.id===r.inv)||{}).cell===flt)).length;
 const al=S.clients.filter(c=>['C','D','E'].includes(ccl(c.id))).sort((a,b)=>ccl(b.id).localeCompare(ccl(a.id)));const aE=al.filter(c=>ccl(c.id)=='E'),aCD=al.filter(c=>ccl(c.id)!='E'),tot=l=>m(sum(l.map(c=>sum(S.invoices.filter(i=>i.client===c.id).map(rest)))));
-return `${aE.length?`<div class="al alE" onclick="cf='E';go('cl')">⚠ ALERTE CLASSE E – ${aE.length} client(s) en pertes potentielles (impayés &gt; 12 mois au 31/12) : ${tot(aE)}</div>`:''}${aCD.length?`<div class="al alY" onclick="go('dash')">⚠ ALERTE CLASSES C / D – ${aCD.length} client(s) à relancer en priorité : ${tot(aCD)}</div>`:''}<div class="card"><h2>Tableau de bord</h2>${fsel()}<div class="k"><div>Total facturé<b>${m(sum(F.map(i=>+i.montant||0)))}</b></div><div>Total impayé<b>${m(imp)}</b></div>
+return `${(()=>{const d=raps().filter(x=>x.r.d<=today());return d.length?`<div class="al alG" onclick="go('rap')">🔔 RAPPEL – ${d.length} relance(s) à faire aujourd’hui : ${d.slice(0,3).map(x=>E(x.i.num)+' ('+E(cname(x.i.client))+')').join(', ')}${d.length>3?'…':''}</div>`:''})()}${aE.length?`<div class="al alE" onclick="cf='E';go('cl')">⚠ ALERTE CLASSE E – ${aE.length} client(s) en pertes potentielles (impayés &gt; 12 mois au 31/12) : ${tot(aE)}</div>`:''}${aCD.length?`<div class="al alY" onclick="go('dash')">⚠ ALERTE CLASSES C / D – ${aCD.length} client(s) à relancer en priorité : ${tot(aCD)}</div>`:''}<div class="card"><h2>Tableau de bord</h2>${fsel()}<div class="k"><div>Total facturé<b>${m(sum(F.map(i=>+i.montant||0)))}</b></div><div>Total impayé<b>${m(imp)}</b></div>
 <div>DSO (12 mois)<b>${b12?Math.round(imp/b12*365):0} jours</b></div><div>Pertes constatées au 31/12/${cy-1}<b>${m(sum(F.filter(isE).map(rest)))}</b></div><div>Pertes prévues au 31/12/${cy}<b>${m(sum(clot(cy,F).map(rest)))}</b></div><div>Relances du mois<b>${rl}</b></div></div></div>
 <div class="chs"><div class="card"><h2>Balance âgée des créances</h2>${curves()}</div><div class="card"><h2>Classement des clients (A → E)</h2>${donut()}</div></div>
 <div class="card"><h2>Alertes</h2><table><tr><th>Client</th><th>Classe</th><th>Impayé</th></tr>${al.map(c=>`<tr class="${rc(ccl(c.id))}"><td>${E(c.rs)}</td><td>${bd(ccl(c.id))}</td><td>${m(sum(S.invoices.filter(i=>i.client===c.id).map(rest)))}</td></tr>`).join('')||'<tr><td colspan="3">Aucune alerte.</td></tr>'}</table></div>`}
@@ -254,10 +264,10 @@ for(const i of pend.iv){const{cn,...d}=i;await db.collection('invoices').doc().s
 /* ---------- affichage ---------- */
 const tg=o=>document.body.classList.toggle('mo',o===undefined?undefined:!!o);
 const go=k=>{tab=k;q='';pvH='';tg(0);render();scrollTo(0,0)};
-const V={cls:v_cls,dash:v_dash,cl:v_cl,inv:v_inv,clo:v_clo,io:v_io};
+const V={rap:v_rap,cls:v_cls,dash:v_dash,cl:v_cl,inv:v_inv,clo:v_clo,io:v_io};
 function render(){if(!db||!user)return vLogin();
 if(document.activeElement&&document.activeElement.tagName=='INPUT'&&document.activeElement.type=='file')return;
-document.body.classList.add('in');$('#app').innerHTML=`<div class="lay"><div id="scrim" onclick="tg(0)"></div><nav><div class="nh">Menu<button onclick="tg(0)" aria-label="Fermer">✕</button></div>${[['dash','📊','Tableau de bord'],['cl','👥','Clients'],['inv','🧾','Factures'],['cls','🏅','Classement clients'],['clo','📅','Clôture'],['acc','👤','Mon compte']].map(([k,ic,l])=>`<button class="it ${tab==k?'on':''}" onclick="go('${k}')"><i>${ic}</i>${l}</button>`).join('')}</nav><main>${V[tab]()}</main></div>`;const e=$('#qs');if(e&&q){e.focus();e.setSelectionRange(q.length,q.length)}}
+document.body.classList.add('in');$('#app').innerHTML=`<div class="lay"><div id="scrim" onclick="tg(0)"></div><nav><div class="nh">Menu<button onclick="tg(0)" aria-label="Fermer">✕</button></div>${[['dash','📊','Tableau de bord'],['cl','👥','Clients'],['inv','🧾','Factures'],['rap','🔔','Rappels'+(()=>{const n=raps().filter(x=>x.r.d<=today()).length;return n?' ('+n+')':''})()],['cls','🏅','Classement clients'],['clo','📅','Clôture'],['acc','👤','Mon compte']].map(([k,ic,l])=>`<button class="it ${tab==k?'on':''}" onclick="go('${k}')"><i>${ic}</i>${l}</button>`).join('')}</nav><main>${V[tab]()}</main></div>`;const e=$('#qs');if(e&&q){e.focus();e.setSelectionRange(q.length,q.length)}}
 /* ---------- connexion / compte ---------- */
 const ERR={'auth/invalid-credential':'E-mail ou mot de passe incorrect.','auth/wrong-password':'Mot de passe incorrect.','auth/user-not-found':'Aucun compte avec cet e-mail. Cliquez sur « Créer un compte ».','auth/invalid-email':'Adresse e-mail invalide.','auth/email-already-in-use':'Ce compte existe déjà : connectez-vous, ou utilisez « Mot de passe oublié ».','auth/weak-password':'Mot de passe trop court (6 caractères minimum).','auth/too-many-requests':'Trop de tentatives. Patientez quelques minutes ou réinitialisez le mot de passe.','auth/network-request-failed':'Pas de connexion Internet.','auth/requires-recent-login':'Par sécurité, reconnectez-vous puis recommencez.','auth/missing-password':'Saisissez le mot de passe.'};
 const errMsg=e=>ERR[e&&e.code]||('Erreur : '+((e&&e.message)||e));
