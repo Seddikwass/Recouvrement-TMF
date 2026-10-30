@@ -44,6 +44,7 @@ input,select,textarea{width:100%;font:17px var(--f);color:#111;padding:9px;borde
 footer{position:fixed;left:0;right:0;bottom:0;background:#0a2a5c;border-top:1px solid #2a3a63;color:#fff;text-align:center;font-weight:900;padding:12px 8px calc(12px + env(safe-area-inset-bottom,0px));letter-spacing:1px;z-index:10}
 .lg span{display:inline-block;margin-right:14px}.lg i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:4px;vertical-align:middle}
 .err{color:var(--r);font-weight:700}
+.yb{display:inline-block;color:#fff;font-weight:800;border-radius:8px;padding:4px 10px}.ct{min-width:560px}.ct td{border-bottom:1px solid #fff}.ct tr.tt td{color:#fff;font-weight:900;font-size:17px}.yc h2{font-size:21px}
 button.pay{background:#d7ebff;color:#0a2a5c;border:2px solid #0D51A1}
 .xl{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 14px}.xl button,.xl .bt{margin:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:10px 4px;font:700 15px var(--f);background:var(--l);color:#0a2a5c;border:2px solid #b9c9e3;border-radius:10px;cursor:pointer;text-align:center}.xl i{font-style:normal;font-size:20px}
 .al{border-radius:10px;padding:12px 14px;margin-bottom:10px;font-weight:900;cursor:pointer}.alE{background:#D40005;color:#fff;border:2px solid #fff}.alY{background:#f5c400;color:#111;border:2px solid #fff}
@@ -99,7 +100,7 @@ function clot(Y,list){return list.filter(i=>rest(i)>0&&days(i.echeance||i.date,Y
 
 /* ---------- données ---------- */
 function autoArch(){if(auto||!admin||L<4)return;auto=true;const cy=new Date().getFullYear();for(let Y=2022;Y<cy;Y++)if(!S.clotures.find(c=>c.id===''+Y))arch(Y)}
-async function arch(Y){const l=clot(Y,S.invoices);await db.doc('clotures/'+Y).set({year:Y,total:sum(l.map(rest)),n:l.length,at:new Date().toISOString(),list:l.slice(0,400).map(i=>({num:i.num,client:cname(i.client),reste:rest(i)}))})}
+async function arch(Y){const l=clot(Y,S.invoices);await db.doc('clotures/'+Y).set({year:Y,total:sum(l.map(rest)),n:l.length,at:new Date().toISOString(),list:l.slice(0,400).map(i=>({num:i.num,client:cname(i.client),cell:i.cell||'',ech:i.echeance||i.date||'',reste:rest(i)}))})}
 async function del(col,id){if(!admin)return alert('Réservé à l’administrateur.');if(confirm('Confirmer la suppression ?'))await db.doc(col+'/'+id).delete()}
 const modal=h=>{$('#md').innerHTML='<div class="ov"><div class="mo">'+h+'</div></div>'};
 const closeM=()=>{$('#md').innerHTML=''};
@@ -212,9 +213,19 @@ const imp=c=>sum(S.invoices.filter(i=>i.client===c.id&&(!flt||i.cell===flt)).map
 return `<div class="card"><h2>Classement des clients (A → E)</h2>${fsel()}<p style="font-size:15px">Classement automatique selon le retard de paiement. Classe E : facture impayée de plus de 12 mois au 31/12. B ≤ ${S.cfg.b} j · C ≤ ${S.cfg.c} j · D au-delà.</p>${donut()}</div>
 ${['E','D','C','B','A'].map(k=>`<div class="card"><h2>${bd(k)} ${KL[k]} <small>(${g[k].length})</small></h2>${g[k].length?`<table style="min-width:0"><tr><th>Client</th><th>Impayé</th><th></th></tr>${g[k].sort((a,b)=>imp(b)-imp(a)).map(c=>`<tr class="${rc(k)}"><td>${E(c.rs)}</td><td>${m(imp(c))}</td><td><button class="sm" onclick="vClient('${c.id}')">Voir</button></td></tr>`).join('')}</table>`:'<p>Aucun client.</p>'}</div>`).join('')}`}
 /* ---------- clôture ---------- */
-function v_clo(){const cy=new Date().getFullYear(),R=[];for(let Y=cy;Y>=2022;Y--){const a=S.clotures.find(c=>c.id===''+Y),l=clot(Y,S.invoices),tot=a?a.total:sum(l.map(rest));
-R.push(`<details><summary><b>31/12/${Y}</b> – pertes potentielles : ${m(tot)} (${a?a.n:l.length} facture(s)) · ${a?'archivée':'calcul en direct'}</summary><table><tr><th>N°</th><th>Client</th><th>Reste</th></tr>${(a?a.list:l.map(i=>({num:i.num,client:cname(i.client),reste:rest(i)}))).map(x=>`<tr class="rE"><td>${E(x.num)}</td><td>${E(x.client)}</td><td>${m(x.reste)}</td></tr>`).join('')}</table>${admin&&Y<cy?`<button class="sm" onclick="arch(${Y})">Réarchiver</button>`:''}</details>`)}
-return `<div class="card"><h2>Clôture annuelle (depuis 2022)</h2><p>Chaque 31/12, toute facture impayée de plus de 12 mois passe en perte potentielle et son client en classe E. Les années passées sont archivées automatiquement à l’ouverture par l’administrateur.</p>${R.join('')}</div>
+const YC=['#0D51A1','#6a4c93','#1b8a7a','#c46a1b','#2f6fb5','#8a3b6f','#4a7c1f','#b5452f'];
+const ycol=Y=>YC[(Y-2022)%YC.length];
+function v_clo(){const cy=new Date().getFullYear(),Ys=[];for(let Y=cy;Y>=2022;Y--){const a=S.clotures.find(c=>c.id===''+Y),live=clot(Y,S.invoices);
+const rows=a?a.list:live.map(i=>({num:i.num,client:cname(i.client),cell:i.cell,ech:i.echeance||i.date,reste:rest(i)}));
+Ys.push({Y,a,rows,tot:a?a.total:sum(live.map(rest)),n:a?a.n:live.length})}
+const sumRow=`<table class="ct"><tr><th>Clôture</th><th>Factures</th><th>Pertes potentielles</th><th>État</th></tr>${Ys.map(y=>`<tr><td><span class="yb" style="background:${ycol(y.Y)}">31/12/${y.Y}</span></td><td>${y.n}</td><td><b>${m(y.tot)}</b></td><td>${y.Y<cy?(y.a?'✔ Archivée':'À archiver'):'Prévision (année en cours)'}</td></tr>`).join('')}</table>`;
+const cards=Ys.map(y=>`<div class="card yc" style="border-top:8px solid ${ycol(y.Y)}"><h2 style="color:${ycol(y.Y)}">Clôture du 31/12/${y.Y}</h2>
+<div class="k"><div style="border-left-color:${ycol(y.Y)}">Factures en pertes potentielles<b>${y.n}</b></div><div style="border-left-color:${ycol(y.Y)}">Montant total<b>${m(y.tot)}</b></div></div>
+${y.rows.length?`<table class="ct"><tr style="background:${ycol(y.Y)}"><th style="background:${ycol(y.Y)}">N° facture</th><th style="background:${ycol(y.Y)}">Client</th><th style="background:${ycol(y.Y)}">Cellule</th><th style="background:${ycol(y.Y)}">Échéance</th><th style="background:${ycol(y.Y)}">Retard au 31/12</th><th style="background:${ycol(y.Y)}">Reste dû</th></tr>
+${y.rows.map((x,k)=>`<tr style="background:${k%2?ycol(y.Y)+'14':ycol(y.Y)+'26'}"><td><b>${E(x.num)}</b></td><td>${E(x.client)}</td><td>${E(x.cell||'—')}</td><td>${fd(x.ech)||'—'}</td><td>${x.ech?days(x.ech,y.Y+'-12-31')+' j':'—'}</td><td><b>${m(x.reste)}</b></td></tr>`).join('')}
+<tr class="tt" style="background:${ycol(y.Y)}"><td colspan="5">TOTAL ${y.Y}</td><td>${m(y.tot)}</td></tr></table>`:'<p>Aucune facture en perte potentielle pour cette année ✔</p>'}
+${admin&&y.Y<cy?`<button class="sm" onclick="arch(${y.Y})">${y.a?'Réarchiver':'Archiver maintenant'}</button>`:''}</div>`).join('');
+return `<div class="card"><h2>Clôture annuelle (depuis 2022)</h2><p>Chaque 31/12, toute facture impayée de plus de 12 mois passe en perte potentielle et son client en classe E. Les années passées sont archivées automatiquement à l’ouverture par l’administrateur.</p>${sumRow}</div>${cards}
 <div class="card"><h2>Seuils de classement (jours)</h2>${admin?`<div class="g">${inp('sb','B jusqu’à',S.cfg.b,'number')}${inp('sc','C jusqu’à',S.cfg.c,'number')}</div><button onclick="svCfg()">Enregistrer</button>`:`<p>B ≤ ${S.cfg.b} · C ≤ ${S.cfg.c} · D au-delà · E = impayé de plus de 12 mois au 31/12 (modifiables par l’administrateur).</p>`}</div>`}
 async function svCfg(){await db.doc('config/seuils').set({b:+v('sb')||30,c:+v('sc')||90,d:365})}
 
