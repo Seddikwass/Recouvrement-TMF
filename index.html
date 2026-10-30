@@ -287,5 +287,5 @@ const start=()=>{if(started)return;started=true;sub('clients','clients');sub('in
 UN.push(db.doc('config/seuils').onSnapshot(s=>{if(s.exists)S.cfg=s.data();render()},()=>{}));if(admin)sub('roles','roles');render()};
 if(ADMINS.includes(em)){admin=true;start();return}
 UN.push(db.doc('roles/'+em).onSnapshot(d=>{if(!d.exists){admin=false;return vRefus()}const was=admin;admin=d.data().role=='admin';if(started&&was!==admin){location.reload();return}start();render()},()=>vRefus()))})})();
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator){let rl=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!rl){rl=true;location.reload()}});navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{r.update();document.addEventListener('visibilitychange',()=>{if(!document.hidden)r.update()})}).catch(()=>{})}
 </script></body></html>
