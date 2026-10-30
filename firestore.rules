@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function connecte() {
+      return request.auth != null
+        && request.auth.token.email.lower().matches('.*@tmf[.]com[.]tn$');
+    }
+    function admin() {
+      return request.auth != null
+        && request.auth.token.email.lower() == 'wassim.khalfalli@tmf.com.tn';
+    }
+    match /clients/{id}   { allow read, create: if connecte(); allow update, delete: if admin(); }
+    match /invoices/{id}  { allow read, create: if connecte(); allow update, delete: if admin(); }
+    match /relances/{id}  { allow read, create: if connecte(); allow update, delete: if admin(); }
+    match /clotures/{id}  { allow read: if connecte(); allow write: if admin(); }
+    match /config/{id}    { allow read: if connecte(); allow write: if admin(); }
+  }
+}

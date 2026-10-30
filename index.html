@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>RECOUVREMENT TMF</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a2a5c">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{--b:#0D51A1;--d:#0a2a5c;--r:#D40005;--w:#fff;--y:#f5c400;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}html,body{margin:0;font:16px/1.45 Arial,Helvetica,sans-serif;background:var(--d);color:#111}
+body{padding:0 12px 80px}
+header{display:flex;align-items:center;gap:12px;padding:12px 0;color:#fff}
+.logo{height:64px;width:auto;background:#fff;border-radius:8px;padding:3px}
+h1{font-size:22px;margin:0;color:#fff}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+nav button{background:transparent;color:#fff;border:2px solid #fff}nav button.on{background:var(--r);border-color:var(--r)}
+button{font:700 16px Arial;background:var(--b);color:#fff;border:0;border-radius:8px;padding:10px 16px;cursor:pointer;margin:2px}
+button.sec{background:#e6ecf5;color:var(--d)}button.red{background:var(--r)}button.sm{padding:6px 10px}
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;overflow-x:auto}
+h2{color:var(--r);margin:0 0 10px;font-size:20px}
+.k{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.k div{background:#eef3fa;border-left:6px solid var(--b);border-radius:8px;padding:10px}.k b{display:block;font-size:20px;color:var(--d)}
+table{border-collapse:collapse;width:100%;min-width:640px}th{background:var(--b);color:#fff;text-align:left}
+th,td{padding:8px;border-bottom:1px solid #d5deea;font-size:16px}
+tr.rE td{background:#ffd6d7}tr.rY td{background:#fff3b0}
+.bd{display:inline-block;min-width:28px;text-align:center;border-radius:6px;color:#fff;font-weight:900;padding:2px 6px}
+.cA{background:#0D51A1}.cB{background:#6cb4ee}.cC,.cD{background:#e0a800;color:#111}.cE{background:#D40005}
+label{display:block;font-weight:700;margin:8px 0;color:var(--d)}
+input,select,textarea{width:100%;font:16px Arial;padding:9px;border:2px solid #9db3d1;border-radius:8px;margin-top:3px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.ov{position:fixed;inset:0;background:#000a;z-index:20;overflow:auto;padding:12px}
+.mo{background:#fff;border-radius:12px;max-width:720px;margin:0 auto;padding:16px}
+footer{position:fixed;left:0;right:0;bottom:0;background:var(--b);color:#fff;text-align:center;font-weight:900;padding:12px 8px calc(12px + env(safe-area-inset-bottom,0px));letter-spacing:1px;z-index:10}
+.lg span{display:inline-block;margin-right:14px}.lg i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:4px;vertical-align:middle}
+.err{color:var(--r);font-weight:700}
+</style></head><body>
+<header><img class="logo" alt="TMF" src="data:image/png;base64,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"><h1>RECOUVREMENT TMF</h1></header>
+<div id="app"></div><div id="md"></div>
+<footer>ADMINISTRATEUR WASSIM KHALFALLI</footer>
+<script>
+/* =====================================================================
+   CONFIGURATION FIREBASE — collez ici les valeurs de VOTRE projet Firebase
+   (Console Firebase → Paramètres du projet → Vos applications → Web → Config)
+   ===================================================================== */
+const firebaseConfig={
+  apiKey:"AIzaSyBOxIMhcDkZpTo7wWbkUQnNHB1vL93-rmQ",
+  authDomain:"recouvrement-tmf.firebaseapp.com",
+  projectId:"recouvrement-tmf",
+  storageBucket:"recouvrement-tmf.firebasestorage.app",
+  messagingSenderId:"687858671460",
+  appId:"1:687858671460:web:46ea074ced431664bda471",
+  measurementId:"G-RPVM2JN9D7"
+};
+/* Comptes administrateur (modification et suppression des fiches et factures) */
+const ADMINS=['wassim.khalfalli@tmf.com.tn'];
+/* Seules les adresses de ce domaine peuvent créer un compte */
+const DOMAINE='@tmf.com.tn';
+/* ===================================================================== */
+const $=s=>document.querySelector(s);
+const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const CELLS=['CARRIER','KAESER','TRANSICOLD'];
+let db,user,dl,admin=false,me='Utilisateur',L=0,auto=false,tab='dash',flt='',cf='',q='',pend=null;
+const S={clients:[],invoices:[],relances:[],clotures:[],cfg:{b:30,c:90,d:365}};
+const today=()=>new Date().toISOString().slice(0,10);
+const days=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+const fd=d=>d?d.split('-').reverse().join('/'):'';
+const fdt=t=>new Date(t).toLocaleString('fr-FR');
+const m=n=>(+n||0).toLocaleString('fr-FR',{minimumFractionDigits:3,maximumFractionDigits:3})+' TND';
+const rest=i=>Math.max(0,(+i.montant||0)-(+i.paye||0));
+const late=i=>rest(i)>0?days(i.echeance||i.date,today()):0;
+const sum=a=>a.reduce((s,x)=>s+x,0);
+const cname=id=>(S.clients.find(c=>c.id===id)||{}).rs||'?';
+function status(i){if(rest(i)<=0)return'payée';if(late(i)>365)return'perte potentielle';return +i.paye>0?'partiellement payée':'impayée'}
+function icl(i){const l=late(i);return l>365?'E':l>90?'D':l>30?'C':l>0?'B':'A'}
+function ccl(id){const l=Math.max(0,...S.invoices.filter(i=>i.client===id&&rest(i)>0).map(late));const g=S.cfg;return l<=0?'A':l<=g.b?'B':l<=g.c?'C':l<=g.d?'D':'E'}
+const rc=k=>k=='E'?'rE':(k=='C'||k=='D')?'rY':'';
+const bd=k=>`<span class="bd c${k}">${k}</span>`;
+const invF=()=>S.invoices.filter(i=>!flt||i.cell===flt);
+function clot(Y,list){return list.filter(i=>rest(i)>0&&days(i.echeance||i.date,Y+'-12-31')>365)}
+
+/* ---------- données ---------- */
+function autoArch(){if(auto||!admin||L<4)return;auto=true;const cy=new Date().getFullYear();for(let Y=2022;Y<cy;Y++)if(!S.clotures.find(c=>c.id===''+Y))arch(Y)}
+async function arch(Y){const l=clot(Y,S.invoices);await db.doc('clotures/'+Y).set({year:Y,total:sum(l.map(rest)),n:l.length,at:new Date().toISOString(),list:l.slice(0,400).map(i=>({num:i.num,client:cname(i.client),reste:rest(i)}))})}
+async function del(col,id){if(!admin)return alert('Réservé à l’administrateur.');if(confirm('Confirmer la suppression ?'))await db.doc(col+'/'+id).delete()}
+const modal=h=>{$('#md').innerHTML='<div class="ov"><div class="mo">'+h+'</div></div>'};
+const closeM=()=>{$('#md').innerHTML=''};
+const inp=(i,l,v,t='text')=>`<label>${l}<input id="f_${i}" type="${t}" value="${E(v)}"></label>`;
+const ta=(i,l,v)=>`<label>${l}<textarea id="f_${i}" rows="3">${E(v)}</textarea></label>`;
+const sel=(i,l,o,v)=>`<label>${l}<select id="f_${i}">${o.map(x=>`<option value="${E(x[0])}" ${x[0]==v?'selected':''}>${E(x[1])}</option>`).join('')}</select></label>`;
+const v=i=>$('#f_'+i).value.trim();
+
+/* ---------- clients ---------- */
+function fClient(id){if(id&&!admin)return alert('Modification réservée à l’administrateur.');const c=S.clients.find(x=>x.id===id)||{};
+modal(`<h2>${id?'Modifier':'Nouveau'} client</h2>${inp('rs','Raison sociale',c.rs)}${inp('mf','Matricule fiscal',c.mf)}${inp('rue','Rue',c.rue)}
+<div class="g">${inp('ville','Ville',c.ville)}${inp('cp','Code postal',c.cp)}${inp('pays','Pays',c.pays||'Tunisie')}</div>
+${ta('em','E-mails (un par ligne)',(c.em||[]).join('\n'))}${ta('tel','Téléphones (un par ligne, ajouter « wa » à la fin si WhatsApp)',(c.tel||[]).map(t=>t.n+(t.wa?' wa':'')).join('\n'))}
+${inp('ct','Personne de contact',c.ct)}${ta('nt','Note client',c.nt)}
+<button onclick="svClient('${id||''}')">Enregistrer</button><button class="sec" onclick="closeM()">Annuler</button>`)}
+const lines=s=>s.split('\n').map(x=>x.trim()).filter(Boolean);
+const tels=s=>lines(s).map(x=>({n:x.replace(/\s+wa$/i,'').trim(),wa:/\swa$/i.test(x)}));
+async function svClient(id){if(!v('rs'))return alert('Raison sociale obligatoire.');
+const d={rs:v('rs'),mf:v('mf'),rue:v('rue'),ville:v('ville'),cp:v('cp'),pays:v('pays'),em:lines($('#f_em').value),tel:tels($('#f_tel').value),ct:v('ct'),nt:v('nt')};
+await db.doc('clients/'+(id||db.collection('clients').doc().id)).set(d);closeM()}
+function vClient(id){const c=S.clients.find(x=>x.id===id),l=S.invoices.filter(i=>i.client===id);
+modal(`<h2>${E(c.rs)} ${bd(ccl(id))}</h2><p>MF : ${E(c.mf)}<br>${E([c.rue,c.cp,c.ville,c.pays].filter(Boolean).join(', '))}<br>Contact : ${E(c.ct)}<br>E-mails : ${E((c.em||[]).join(', '))}<br>Tél. : ${E((c.tel||[]).map(t=>t.n+(t.wa?' (WhatsApp)':'')).join(', '))}<br>Note : ${E(c.nt)}</p>
+<p><b>Facturé :</b> ${m(sum(l.map(i=>+i.montant||0)))} · <b>Impayé :</b> ${m(sum(l.map(rest)))}</p>
+<table><tr><th>N°</th><th>Reste</th><th>Statut</th><th></th></tr>${l.map(i=>`<tr class="${rc(icl(i))}"><td>${E(i.num)}</td><td>${m(rest(i))}</td><td>${status(i)}</td><td><button class="sm red" onclick="fRel('${i.id}')">Relancer</button></td></tr>`).join('')}</table>
+<button class="sec" onclick="closeM()">Fermer</button>`)}
+function v_cl(){const l=S.clients.filter(c=>(!cf||ccl(c.id)===cf)&&(!q||c.rs.toLowerCase().includes(q.toLowerCase())));
+return `<div class="card"><h2>Clients ${cf?'– classe '+cf:''}</h2><button onclick="fClient()">+ Nouveau client</button>${cf?'<button class="sec" onclick="cf=\'\';render()">Tous</button>':''}
+<input placeholder="Rechercher…" value="${E(q)}" id="qs" oninput="q=this.value;render()" style="max-width:300px;display:inline-block">
+<table><tr><th>Client</th><th>Classe</th><th>Facturé</th><th>Impayé</th><th></th></tr>${l.map(c=>{const k=ccl(c.id),x=S.invoices.filter(i=>i.client===c.id);
+return `<tr class="${rc(k)}"><td>${E(c.rs)}</td><td>${bd(k)}</td><td>${m(sum(x.map(i=>+i.montant||0)))}</td><td>${m(sum(x.map(rest)))}</td><td><button class="sm" onclick="vClient('${c.id}')">Voir</button>${admin?`<button class="sm sec" onclick="fClient('${c.id}')">Modifier</button><button class="sm red" onclick="del('clients','${c.id}')">Suppr.</button>`:''}</td></tr>`}).join('')}</table></div>`}
+
+/* ---------- factures ---------- */
+function fInv(id){if(id&&!admin)return alert('Modification réservée à l’administrateur.');if(!S.clients.length)return alert('Créez d’abord un client.');const i=S.invoices.find(x=>x.id===id)||{};
+modal(`<h2>${id?'Modifier':'Nouvelle'} facture</h2>${sel('cl','Client',S.clients.map(c=>[c.id,c.rs]),i.client)}${sel('ce','Cellule TMF (obligatoire)',CELLS.map(c=>[c,c]),i.cell)}
+${inp('num','N° de facture',i.num)}<div class="g">${inp('dt','Date',i.date||today(),'date')}${inp('ec','Échéance',i.echeance,'date')}</div>
+<div class="g">${inp('mt','Montant (TND)',i.montant,'number')}${inp('pa','Montant payé',i.paye||0,'number')}</div>
+${sel('na','Nature',['Prestation','Pièces','Prestation + Pièces'].map(x=>[x,x]),i.nature)}${sel('rp','Rapport d’intervention signé',['Non','Oui'].map(x=>[x,x]),i.rapport)}${ta('av','Avis technique',i.avis)}
+<button onclick="svInv('${id||''}')">Enregistrer</button><button class="sec" onclick="closeM()">Annuler</button>`)}
+async function svInv(id){if(!v('num')||!v('dt')||!(+v('mt')>0))return alert('N°, date et montant obligatoires.');
+const d={client:v('cl'),cell:v('ce'),num:v('num'),date:v('dt'),echeance:v('ec')||v('dt'),montant:+v('mt'),paye:+v('pa')||0,nature:v('na'),rapport:v('rp'),avis:v('av')};
+await db.doc('invoices/'+(id||db.collection('invoices').doc().id)).set(d);closeM()}
+function v_inv(){const l=invF().filter(i=>!q||(i.num+cname(i.client)).toLowerCase().includes(q.toLowerCase())).sort((a,b)=>late(b)-late(a));
+return `<div class="card"><h2>Factures</h2><button onclick="fInv()">+ Nouvelle facture</button>${fsel()}
+<input placeholder="Rechercher…" value="${E(q)}" id="qs" oninput="q=this.value;render()" style="max-width:300px;display:inline-block">
+<table><tr><th>N°</th><th>Client</th><th>Cellule</th><th>Échéance</th><th>Reste dû</th><th>Retard</th><th>Statut</th><th></th></tr>${l.map(i=>`<tr class="${rc(icl(i))}"><td>${E(i.num)}</td><td>${E(cname(i.client))}</td><td>${E(i.cell)}</td><td>${fd(i.echeance)}</td><td>${m(rest(i))}</td><td>${late(i)>0?late(i)+' j':''}</td><td>${status(i)}</td>
+<td><button class="sm red" onclick="fRel('${i.id}')">Relancer</button><button class="sm sec" onclick="hist('${i.id}')">Historique</button>${admin?`<button class="sm sec" onclick="fInv('${i.id}')">Modifier</button><button class="sm red" onclick="del('invoices','${i.id}')">Suppr.</button>`:''}</td></tr>`).join('')}</table></div>`}
+const fsel=()=>`<select style="max-width:200px;display:inline-block" onchange="flt=this.value;render()"><option value="">Toutes cellules</option>${CELLS.map(c=>`<option ${c==flt?'selected':''}>${c}</option>`).join('')}</select>`;
+
+/* ---------- relances ---------- */
+const P='Bonjour {rs},\n\n',Z='\n\nCordialement,\nTMF Carrier – Service recouvrement\nWassim Khalfalli';
+const TY=[['Relance amicale n°1','Nous vous rappelons courtoisement que la facture {num} ({mt}), échue le {ec}, n’a pas encore été réglée.'],
+['Relance amicale n°2','Sauf erreur de notre part, la facture {num} ({mt}), échue le {ec} ({j} jours de retard), demeure impayée. Merci de régulariser.'],
+['Relance amicale n°3','Nous revenons vers vous au sujet de la facture {num} ({mt}) échue depuis {j} jours. Pouvez-vous nous confirmer la date de règlement ?'],
+['Relance amicale n°4','Malgré nos précédents rappels, la facture {num} ({mt}) reste impayée ({j} jours de retard). Nous comptons sur votre règlement rapide.'],
+['Relance amicale n°5','Nous vous relançons à nouveau pour la facture {num} ({mt}), en retard de {j} jours. Merci de nous indiquer votre date de paiement.'],
+['Relance ferme n°1','Nous vous demandons de régler sous 8 jours la facture {num} ({mt}), échue le {ec} ({j} jours de retard).'],
+['Relance ferme n°2','Sans règlement sous 5 jours de la facture {num} ({mt}), échue depuis {j} jours, nous serons contraints de suspendre nos prestations.'],
+['Dernière relance avant mise en demeure','Dernière relance avant mise en demeure : la facture {num} ({mt}), échue depuis {j} jours, doit être réglée sous 48 heures.'],
+['Mise en demeure','Par la présente, nous vous mettons en demeure de payer sous 8 jours la somme de {mt} due au titre de la facture {num}, échue le {ec}, faute de quoi nous engagerons les poursuites nécessaires.'],
+['Accusé de réception de paiement','Nous accusons réception de votre paiement relatif à la facture {num} et vous en remercions.']];
+function vars(i){return{rs:cname(i.client),num:i.num,mt:m(rest(i)||i.montant),ec:fd(i.echeance),j:Math.max(0,late(i))}}
+const fill=(s,x)=>s.replace(/\{(\w+)\}/g,(_,k)=>x[k]);
+function fRel(id){const i=S.invoices.find(x=>x.id===id),n=S.relances.filter(r=>r.inv===id).length;const t=rest(i)<=0?9:n<7?n:n==7?7:8;
+modal(`<h2>Relance – facture ${E(i.num)}</h2><p>${E(cname(i.client))} · reste ${m(rest(i))} · retard ${Math.max(0,late(i))} j · ${n} relance(s) déjà faite(s)</p>
+<label>Type<select id="r_t" onchange="chT('${id}')">${TY.map((x,k)=>`<option value="${k}" ${k==t?'selected':''}>${k+1}. ${x[0]}</option>`).join('')}</select></label>
+<label>Objet<input id="r_o"></label><label>Message (modifiable)<textarea id="r_x" rows="9"></textarea></label>
+<label>Pièce jointe (nom du fichier ou lien de téléchargement)<input id="r_p"></label>
+<p style="font-size:16px">Outlook ne peut pas joindre de fichier automatiquement : glissez le fichier dans le message, ou indiquez un lien (ajouté au corps du message).</p>
+<label>Note client / réponse du client<textarea id="r_n" rows="2"></textarea></label>
+<button onclick="sendR('${id}','e-mail')">Outlook</button><button onclick="sendR('${id}','WhatsApp')">WhatsApp</button><button onclick="sendR('${id}','téléphone')">Téléphone</button><button class="sec" onclick="sendR('${id}','note')">Noter seulement</button><button class="sec" onclick="closeM()">Fermer</button>`);chT(id)}
+function chT(id){const i=S.invoices.find(x=>x.id===id),k=+$('#r_t').value;$('#r_o').value=(k==8?'Mise en demeure':'Relance')+' – facture '+i.num;$('#r_x').value=fill(P+TY[k][1]+Z,vars(i))}
+async function sendR(id,ch){const i=S.invoices.find(x=>x.id===id),c=S.clients.find(x=>x.id===i.client)||{};const k=+$('#r_t').value,pj=$('#r_p').value.trim(),note=$('#r_n').value.trim();let txt=$('#r_x').value;
+if(ch=='e-mail'){if(!(c.em||[]).length)return alert('Aucune adresse e-mail pour ce client.');if(/^https?:/.test(pj))txt+='\n\nPièce jointe : '+pj;
+window.open('https://outlook.office.com/mail/deeplink/compose?to='+encodeURIComponent(c.em.join(';'))+'&subject='+encodeURIComponent($('#r_o').value)+'&body='+encodeURIComponent(txt),'_blank')}
+else if(ch=='WhatsApp'||ch=='téléphone'){const t=ch=='WhatsApp'?((c.tel||[]).find(x=>x.wa)||(c.tel||[])[0]):(c.tel||[])[0];if(!t)return alert('Aucun numéro pour ce client.');let n=t.n.replace(/\D/g,'');if(n.length==8)n='216'+n;
+window.open(ch=='WhatsApp'?'https://wa.me/'+n+'?text='+encodeURIComponent(txt):'tel:+'+n,ch=='WhatsApp'?'_blank':'_self')}
+await db.collection('relances').add({inv:id,client:i.client,ts:new Date().toISOString(),canal:ch,type:k+1,pj,note,user:me});closeM()}
+function hist(id){const l=S.relances.filter(r=>r.inv===id).sort((a,b)=>b.ts.localeCompare(a.ts));
+modal(`<h2>Historique des relances</h2><table><tr><th>Date</th><th>Canal</th><th>Type</th><th>Par</th><th>Note / PJ</th></tr>${l.map(r=>`<tr><td>${fdt(r.ts)}</td><td>${E(r.canal)}</td><td>${r.type}</td><td>${E(r.user)}</td><td>${E(r.note)} ${E(r.pj)}</td></tr>`).join('')||'<tr><td colspan="5">Aucune relance.</td></tr>'}</table><button class="sec" onclick="closeM()">Fermer</button>`)}
+
+/* ---------- tableau de bord ---------- */
+const BK=[[1,30,'0-30'],[31,60,'31-60'],[61,90,'61-90'],[91,180,'91-180'],[181,365,'181-365'],[366,1e9,'> 12 mois']];
+const bucket=l=>BK.map(b=>sum(l.filter(i=>late(i)>=b[0]&&late(i)<=b[1]).map(rest)));
+function sp(p){let d=`M${p[0][0]} ${p[0][1]}`;for(let k=0;k<p.length-1;k++){const a=p[k-1]||p[k],b=p[k],c=p[k+1],e=p[k+2]||c;d+=`C${b[0]+(c[0]-a[0])/6} ${b[1]+(c[1]-a[1])/6} ${c[0]-(e[0]-b[0])/6} ${c[1]-(e[1]-b[1])/6} ${c[0]} ${c[1]}`}return d}
+function curves(){const F=invF(),ser=[...(flt?[flt]:CELLS).map((c,k)=>[c,bucket(S.invoices.filter(i=>i.cell===c)),['#0D51A1','#6cb4ee','#0a2a5c'][CELLS.indexOf(c)]]),['TOTAL',bucket(F),'#D40005']];
+const mx=Math.max(1,...ser.flatMap(s=>s[1])),X=k=>70+k*104,Y=y=>220-y/mx*190;
+return `<svg viewBox="0 0 660 270" style="width:100%;min-width:560px"><line x1="70" y1="220" x2="650" y2="220" stroke="#999"/><line x1="70" y1="20" x2="70" y2="220" stroke="#999"/>
+${BK.map((b,k)=>`<text x="${X(k)}" y="245" font-size="14" text-anchor="middle">${b[2]}</text>`).join('')}<text x="64" y="30" font-size="13" text-anchor="end">${Math.round(mx)}</text><text x="64" y="224" font-size="13" text-anchor="end">0</text>
+${ser.map(s=>{const p=s[1].map((y,k)=>[X(k),Y(y)]);return `<path d="${sp(p)}" fill="none" stroke="${s[2]}" stroke-width="3"/>`+p.map((q,k)=>`<circle cx="${q[0]}" cy="${q[1]}" r="6" fill="${s[2]}"><title>${s[0]} · ${BK[k][2]} j : ${m(s[1][k])}</title></circle>`).join('')}).join('')}</svg>
+<div class="lg">${ser.map(s=>`<span><i style="background:${s[2]}"></i>${s[0]}</span>`).join('')}</div>`}
+function donut(){const cl=S.clients.filter(c=>!flt||S.invoices.some(i=>i.client===c.id&&i.cell===flt)),K=['A','B','C','D','E'],col={A:'#0D51A1',B:'#6cb4ee',C:'#f5c400',D:'#e0a800',E:'#D40005'},n=K.map(k=>cl.filter(c=>ccl(c.id)===k).length),T=cl.length||1,C=2*Math.PI*60;let cum=0;
+return `<svg viewBox="0 0 160 160" style="width:240px;max-width:100%"><g transform="rotate(-90 80 80)">${K.map((k,j)=>{const f=n[j]/T,o=`<circle cx="80" cy="80" r="60" fill="none" stroke="${col[k]}" stroke-width="28" stroke-dasharray="${f*C} ${C}" stroke-dashoffset="${-cum*C}" style="cursor:pointer" onclick="cf='${k}';go('cl')"><title>Classe ${k} : ${n[j]} (${Math.round(f*100)} %)</title></circle>`;cum+=f;return o}).join('')}</g>
+<text x="80" y="88" text-anchor="middle" font-size="26" font-weight="900" fill="#0a2a5c">${cl.length}</text></svg>
+<div class="lg">${K.map((k,j)=>`<span><i style="background:${col[k]}"></i>${k} : ${n[j]} (${Math.round(n[j]/T*100)} %)</span>`).join('')}</div>`}
+function v_dash(){const F=invF(),b12=sum(F.filter(i=>days(i.date,today())<=365).map(i=>+i.montant||0)),imp=sum(F.map(rest)),cy=new Date().getFullYear(),mo=today().slice(0,7);
+const rl=S.relances.filter(r=>r.ts.slice(0,7)===mo&&(!flt||(S.invoices.find(i=>i.id===r.inv)||{}).cell===flt)).length;
+const al=S.clients.filter(c=>['C','D','E'].includes(ccl(c.id))).sort((a,b)=>ccl(b.id).localeCompare(ccl(a.id)));
+return `<div class="card"><h2>Tableau de bord</h2>${fsel()}<div class="k"><div>Total facturé<b>${m(sum(F.map(i=>+i.montant||0)))}</b></div><div>Total impayé<b>${m(imp)}</b></div>
+<div>DSO (12 mois)<b>${b12?Math.round(imp/b12*365):0} jours</b></div><div>Pertes potentielles ${cy}<b>${m(sum(clot(cy,F).map(rest)))}</b></div><div>Relances du mois<b>${rl}</b></div></div></div>
+<div class="card"><h2>Balance âgée des créances</h2>${curves()}</div><div class="card"><h2>Classement des clients</h2>${donut()}</div>
+<div class="card"><h2>Alertes</h2><table><tr><th>Client</th><th>Classe</th><th>Impayé</th></tr>${al.map(c=>`<tr class="${rc(ccl(c.id))}"><td>${E(c.rs)}</td><td>${bd(ccl(c.id))}</td><td>${m(sum(S.invoices.filter(i=>i.client===c.id).map(rest)))}</td></tr>`).join('')||'<tr><td colspan="3">Aucune alerte.</td></tr>'}</table></div>`}
+
+/* ---------- clôture ---------- */
+function v_clo(){const cy=new Date().getFullYear(),R=[];for(let Y=cy;Y>=2022;Y--){const a=S.clotures.find(c=>c.id===''+Y),l=clot(Y,S.invoices),tot=a?a.total:sum(l.map(rest));
+R.push(`<details><summary><b>31/12/${Y}</b> – pertes potentielles : ${m(tot)} (${a?a.n:l.length} facture(s)) · ${a?'archivée':'calcul en direct'}</summary><table><tr><th>N°</th><th>Client</th><th>Reste</th></tr>${(a?a.list:l.map(i=>({num:i.num,client:cname(i.client),reste:rest(i)}))).map(x=>`<tr class="rE"><td>${E(x.num)}</td><td>${E(x.client)}</td><td>${m(x.reste)}</td></tr>`).join('')}</table>${admin&&Y<cy?`<button class="sm" onclick="arch(${Y})">Réarchiver</button>`:''}</details>`)}
+return `<div class="card"><h2>Clôture annuelle (depuis 2022)</h2><p>Chaque 31/12, toute facture impayée de plus de 12 mois passe en perte potentielle et son client en classe E. Les années passées sont archivées automatiquement à l’ouverture par l’administrateur.</p>${R.join('')}</div>
+<div class="card"><h2>Seuils de classement (jours)</h2>${admin?`<div class="g">${inp('sb','B jusqu’à',S.cfg.b,'number')}${inp('sc','C jusqu’à',S.cfg.c,'number')}${inp('sd','D jusqu’à (E au-delà)',S.cfg.d,'number')}</div><button onclick="svCfg()">Enregistrer</button>`:`<p>B ≤ ${S.cfg.b} · C ≤ ${S.cfg.c} · D ≤ ${S.cfg.d} · E au-delà (modifiables par l’administrateur).</p>`}</div>`}
+async function svCfg(){await db.doc('config/seuils').set({b:+v('sb')||30,c:+v('sc')||90,d:+v('sd')||365})}
+
+/* ---------- Excel ---------- */
+function v_io(){return `<div class="card"><h2>Export Excel</h2><p>Clients et factures (filtre cellule : ${flt||'toutes'}).</p>${fsel()}<button onclick="exp()">Exporter .xlsx</button></div>
+<div class="card"><h2>Import Excel</h2><p>Classeur avec les feuilles <b>Clients</b> (Raison sociale, Matricule fiscal, Rue, Ville, Code postal, Pays, E-mails, Téléphones, Contact, Note) et <b>Factures</b> (Client, Cellule, N° facture, Date, Échéance, Montant, Payé, Nature, Rapport signé, Avis technique). La colonne Cellule est obligatoire. E-mails et téléphones séparés par « ; ».</p>
+<input type="file" accept=".xlsx" onchange="impF(this.files[0])"><div id="pv"></div></div>`}
+async function exp(){const wb=XLSX.utils.book_new(),F=invF();
+XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.clients.map(c=>({'Raison sociale':c.rs,'Matricule fiscal':c.mf,'Rue':c.rue,'Ville':c.ville,'Code postal':c.cp,'Pays':c.pays,'E-mails':(c.em||[]).join(';'),'Téléphones':(c.tel||[]).map(t=>t.n+(t.wa?' wa':'')).join(';'),'Contact':c.ct,'Note':c.nt}))),'Clients');
+XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(F.map(i=>({'Client':cname(i.client),'Cellule':i.cell,'N° facture':i.num,'Date':fd(i.date),'Échéance':fd(i.echeance),'Montant':i.montant,'Payé':i.paye,'Nature':i.nature,'Rapport signé':i.rapport,'Avis technique':i.avis}))),'Factures');
+XLSX.writeFile(wb,'recouvrement-tmf.xlsx')}
+function pd(x){if(typeof x=='number')return new Date(Math.round((x-25569)*864e5)).toISOString().slice(0,10);x=String(x||'').trim();if(/^\d{4}-\d\d-\d\d/.test(x))return x.slice(0,10);const p=x.split('/');return p.length==3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:''}
+function impF(f){if(!f)return;const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'array'}),rows=n=>wb.Sheets[n]?XLSX.utils.sheet_to_json(wb.Sheets[n]):[],er=[],cl=[],iv=[],known=new Set(S.clients.map(c=>c.rs.toLowerCase()));
+rows('Clients').forEach((x,k)=>{const rs=String(x['Raison sociale']||'').trim();if(!rs)return er.push('Clients ligne '+(k+2)+' : raison sociale vide');if(known.has(rs.toLowerCase()))return;known.add(rs.toLowerCase());
+cl.push({rs,mf:x['Matricule fiscal']||'',rue:x['Rue']||'',ville:x['Ville']||'',cp:x['Code postal']||'',pays:x['Pays']||'Tunisie',em:String(x['E-mails']||'').split(';').map(s=>s.trim()).filter(Boolean),tel:tels(String(x['Téléphones']||'').split(';').join('\n')),ct:x['Contact']||'',nt:x['Note']||''})});
+const nums=new Set(S.invoices.map(i=>i.num));
+rows('Factures').forEach((x,k)=>{const c=String(x['Cellule']||'').toUpperCase().trim(),n=String(x['N° facture']||'').trim(),cn=String(x['Client']||'').trim(),mt=+x['Montant'];
+if(!CELLS.includes(c))return er.push('Factures ligne '+(k+2)+' : cellule invalide');if(!n||!(mt>0)||!pd(x['Date']))return er.push('Factures ligne '+(k+2)+' : n°, date ou montant invalide');if(!known.has(cn.toLowerCase()))return er.push('Factures ligne '+(k+2)+' : client inconnu');if(nums.has(n))return;nums.add(n);
+iv.push({cn,cell:c,num:n,date:pd(x['Date']),echeance:pd(x['Échéance'])||pd(x['Date']),montant:mt,paye:+x['Payé']||0,nature:x['Nature']||'Prestation',rapport:x['Rapport signé']||'Non',avis:x['Avis technique']||''})});
+pend={cl,iv};$('#pv').innerHTML=`<p><b>${cl.length}</b> nouveau(x) client(s), <b>${iv.length}</b> nouvelle(s) facture(s).</p>${er.length?'<p class="err">'+er.slice(0,15).map(E).join('<br>')+'</p>':''}<button onclick="okImp()">Valider l’import</button>`};r.readAsArrayBuffer(f)}
+async function okImp(){const ids={};S.clients.forEach(c=>ids[c.rs.toLowerCase()]=c.id);for(const c of pend.cl){const r=db.collection('clients').doc();ids[c.rs.toLowerCase()]=r.id;await r.set(c)}
+for(const i of pend.iv){const{cn,...d}=i;await db.collection('invoices').doc().set({...d,client:ids[cn.toLowerCase()]})}pend=null;$('#pv').innerHTML='<p><b>Import terminé.</b></p>'}
+
+/* ---------- affichage ---------- */
+const go=k=>{tab=k;q='';render()};
+const V={dash:v_dash,cl:v_cl,inv:v_inv,clo:v_clo,io:v_io};
+function render(){if(!db||!user)return vLogin();
+if(document.activeElement&&document.activeElement.tagName=='INPUT'&&document.activeElement.type=='file')return;
+$('#app').innerHTML=`<nav>${[['dash','Tableau de bord'],['cl','Clients'],['inv','Factures'],['clo','Clôture'],['io','Excel'],['acc','Mon compte']].map(([k,l])=>`<button class="${tab==k?'on':''}" onclick="go('${k}')">${l}</button>`).join('')}</nav>${V[tab]()}`;const e=$('#qs');if(e&&q){e.focus();e.setSelectionRange(q.length,q.length)}}
+/* ---------- connexion / compte ---------- */
+const ERR={'auth/invalid-credential':'E-mail ou mot de passe incorrect.','auth/wrong-password':'Mot de passe incorrect.','auth/user-not-found':'Aucun compte avec cet e-mail. Cliquez sur « Créer un compte ».','auth/invalid-email':'Adresse e-mail invalide.','auth/email-already-in-use':'Ce compte existe déjà : connectez-vous, ou utilisez « Mot de passe oublié ».','auth/weak-password':'Mot de passe trop court (6 caractères minimum).','auth/too-many-requests':'Trop de tentatives. Patientez quelques minutes ou réinitialisez le mot de passe.','auth/network-request-failed':'Pas de connexion Internet.','auth/requires-recent-login':'Par sécurité, reconnectez-vous puis recommencez.','auth/missing-password':'Saisissez le mot de passe.'};
+const errMsg=e=>ERR[e&&e.code]||('Erreur : '+((e&&e.message)||e));
+let lmsg='',lok='';
+function vLogin(){if(!db){$('#app').innerHTML='<div class="card"><h2>Configuration requise</h2><p>Collez la configuration de votre projet Firebase en haut du fichier <b>index.html</b> (bloc « CONFIGURATION FIREBASE »), puis redéployez.</p></div>';return}
+$('#app').innerHTML=`<div class="card" style="max-width:440px;margin:24px auto"><h2>Connexion</h2>${lmsg?`<p class="err">${E(lmsg)}</p>`:''}${lok?`<p style="color:#0a7a2f;font-weight:700">${E(lok)}</p>`:''}
+<label>E-mail professionnel<input id="l_e" type="email" autocomplete="username" value="${E(window._le||'')}"></label>
+<label>Mot de passe<input id="l_p" type="password" autocomplete="current-password" onkeydown="if(event.key=='Enter')doLogin()"></label>
+<button onclick="doLogin()">Se connecter</button><button class="sec" onclick="doSignup()">Créer un compte</button><button class="sec" onclick="doReset()">Mot de passe oublié</button></div>`}
+const lv=()=>{window._le=$('#l_e').value.trim();return[window._le,$('#l_p').value]};
+async function doLogin(){const[e,p]=lv();lmsg=lok='';try{await firebase.auth().signInWithEmailAndPassword(e,p)}catch(x){lmsg=errMsg(x);vLogin()}}
+async function doSignup(){const[e,p]=lv();lmsg=lok='';if(!e.toLowerCase().endsWith(DOMAINE)){lmsg='Utilisez votre adresse '+DOMAINE+'.';return vLogin()}
+try{await firebase.auth().createUserWithEmailAndPassword(e,p)}catch(x){lmsg=errMsg(x);vLogin()}}
+async function doReset(){const[e]=lv();lmsg=lok='';if(!e){lmsg='Saisissez votre e-mail puis cliquez sur « Mot de passe oublié ».';return vLogin()}
+try{await firebase.auth().sendPasswordResetEmail(e);lok='E-mail de réinitialisation envoyé à '+e+' (vérifiez aussi les courriers indésirables).'}catch(x){lmsg=errMsg(x)}vLogin()}
+function v_acc(){return `<div class="card"><h2>Mon compte</h2><p>Connecté : <b>${E(user.email)}</b><br>Rôle : <b>${admin?'Administrateur':'Utilisateur'}</b></p><button class="red" onclick="firebase.auth().signOut()">Se déconnecter</button></div>
+<div class="card"><h2>Changer le mot de passe</h2><label>Mot de passe actuel<input id="p_o" type="password" autocomplete="current-password"></label><label>Nouveau mot de passe<input id="p_n" type="password" autocomplete="new-password"></label><label>Confirmer<input id="p_c" type="password" autocomplete="new-password"></label><button onclick="chPw()">Enregistrer le nouveau mot de passe</button><div id="p_m"></div></div>`}
+async function chPw(){const o=$('#p_o').value,n=$('#p_n').value,c=$('#p_c').value,out=t=>$('#p_m').innerHTML=t;
+if(n.length<6)return out('<p class="err">6 caractères minimum.</p>');if(n!==c)return out('<p class="err">Les deux mots de passe ne correspondent pas.</p>');
+try{await user.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(user.email,o));await user.updatePassword(n);out('<p style="color:#0a7a2f;font-weight:700">Mot de passe modifié.</p>');['p_o','p_n','p_c'].forEach(i=>$('#'+i).value='')}catch(x){out('<p class="err">'+E(errMsg(x))+'</p>')}}
+V.acc=v_acc;
+/* ---------- démarrage ---------- */
+let UN=[];
+function sub(n,k){UN.push(db.collection(n).onSnapshot(s=>{S[k]=s.docs.map(d=>({id:d.id,...d.data()}));L++;render();autoArch()},e=>{console.error(e);if(e.code=='permission-denied')alert('Accès refusé par la base de données : vérifiez les règles Firestore.')}))}
+(()=>{if(String(firebaseConfig.apiKey).startsWith('COLLER'))return vLogin();
+firebase.initializeApp(firebaseConfig);db=firebase.firestore();
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+vLogin();
+firebase.auth().onAuthStateChanged(u=>{UN.forEach(f=>f());UN=[];L=0;auto=false;Object.assign(S,{clients:[],invoices:[],relances:[],clotures:[]});
+user=u;if(!u){admin=false;tab='dash';return vLogin()}
+admin=ADMINS.includes((u.email||'').toLowerCase());me=u.email;lmsg=lok='';
+sub('clients','clients');sub('invoices','invoices');sub('relances','relances');sub('clotures','clotures');
+UN.push(db.doc('config/seuils').onSnapshot(s=>{if(s.exists)S.cfg=s.data();render()},()=>{}));render()})})();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
