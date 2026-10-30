@@ -33,7 +33,7 @@ h2{color:var(--r);margin:0 0 12px;font-size:22px;font-weight:800}
 .k div{background:var(--l);border-left:6px solid var(--b);border-radius:8px;padding:10px}.k b{display:block;font-size:22px;color:#0a2a5c;font-weight:800}
 table{border-collapse:collapse;width:100%;min-width:640px}th{background:var(--b);color:#fff;text-align:left}
 th,td{padding:10px 8px;border-bottom:1px solid #d5deea;font-size:16px;line-height:1.4}td{color:#111}th{font-weight:700;font-size:15px}small{font-size:14px;color:#333}
-tr.rE td{background:#fde0e1;font-weight:700}tr.rY td{background:#fff4c2}
+tr.rP td{background:#d7ebff;color:#0a2a5c}.pB{display:inline-block;background:#0D51A1;color:#fff;font-weight:800;font-size:13px;border-radius:6px;padding:2px 8px}tr.rE td{background:#fde0e1;font-weight:700}tr.rY td{background:#fff4c2}
 .bd{display:inline-block;min-width:28px;text-align:center;border-radius:6px;color:#fff;font-weight:900;padding:2px 6px}
 .cA{background:#c3d1e8;color:#0a2a5c}.cB{background:#0D51A1;color:#fff}.cC{background:#f5c400;color:#111}.cD{background:#e0a800;color:#111}.cE{background:#D40005;color:#fff}
 label{display:block;font-weight:700;margin:10px 0;color:#0a2a5c;font-size:16px}
@@ -44,6 +44,7 @@ input,select,textarea{width:100%;font:17px var(--f);color:#111;padding:9px;borde
 footer{position:fixed;left:0;right:0;bottom:0;background:#0a2a5c;border-top:1px solid #2a3a63;color:#fff;text-align:center;font-weight:900;padding:12px 8px calc(12px + env(safe-area-inset-bottom,0px));letter-spacing:1px;z-index:10}
 .lg span{display:inline-block;margin-right:14px}.lg i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:4px;vertical-align:middle}
 .err{color:var(--r);font-weight:700}
+button.pay{background:#d7ebff;color:#0a2a5c;border:2px solid #0D51A1}
 .xl{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 14px}.xl button,.xl .bt{margin:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:10px 4px;font:700 15px var(--f);background:var(--l);color:#0a2a5c;border:2px solid #b9c9e3;border-radius:10px;cursor:pointer;text-align:center}.xl i{font-style:normal;font-size:20px}
 .al{border-radius:10px;padding:12px 14px;margin-bottom:10px;font-weight:900;cursor:pointer}.alE{background:#D40005;color:#fff;border:2px solid #fff}.alY{background:#f5c400;color:#111;border:2px solid #fff}
 </style></head><body>
@@ -74,7 +75,7 @@ const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt
 const CELLS=['CARRIER','KAESER','TRANSICOLD'];
 let db,user,dl,admin=false,me='Utilisateur',L=0,auto=false,tab='dash',flt='',cf='',q='',pend=null;
 const S={clients:[],invoices:[],relances:[],clotures:[],cfg:{b:30,c:90,d:365}};
-const today=()=>new Date().toISOString().slice(0,10);
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 const days=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
 const fd=d=>d?d.split('-').reverse().join('/'):'';
 const fdt=t=>new Date(t).toLocaleString('fr-FR');
@@ -85,6 +86,9 @@ const sum=a=>a.reduce((s,x)=>s+x,0);
 const cname=id=>(S.clients.find(c=>c.id===id)||{}).rs||'?';
 const lastClose=()=>(new Date().getFullYear()-1)+'-12-31';
 const isE=i=>rest(i)>0&&days(i.echeance||i.date,lastClose())>365;
+const stB=i=>rest(i)<=0?`<span class="pB">✔ PAYÉE</span>${i.datePaiement?'<br><small>le '+fd(i.datePaiement)+'</small>':''}`:status(i);
+async function payInv(id){if(!admin)return alert('Réservé à l’administrateur.');const i=S.invoices.find(x=>x.id===id);if(!confirm('Marquer la facture '+i.num+' comme payée ('+m(i.montant)+') ?'))return;
+await db.doc('invoices/'+id).set({paye:+i.montant||0,datePaiement:today()},{merge:true});await db.collection('relances').add({inv:id,client:i.client,ts:new Date().toISOString(),canal:'paiement',type:'—',pj:'',note:'Facture marquée payée',user:me})}
 function status(i){if(rest(i)<=0)return'payée';if(isE(i))return'perte potentielle';return +i.paye>0?'partiellement payée':'impayée'}
 function icl(i){if(isE(i))return'E';const l=late(i),g=S.cfg;return l<=0?'A':l<=g.b?'B':l<=g.c?'C':'D'}
 function ccl(id){const L=S.invoices.filter(i=>i.client===id&&rest(i)>0);if(L.some(isE))return'E';const l=Math.max(0,...L.map(late)),g=S.cfg;return l<=0?'A':l<=g.b?'B':l<=g.c?'C':'D'}
@@ -119,7 +123,7 @@ await db.doc('clients/'+(id||db.collection('clients').doc().id)).set(d);closeM()
 function vClient(id){const c=S.clients.find(x=>x.id===id),l=S.invoices.filter(i=>i.client===id);
 modal(`<h2>${E(c.rs)} ${bd(ccl(id))}</h2><p>MF : ${E(c.mf)}<br>${E([c.rue,c.cp,c.ville,c.pays].filter(Boolean).join(', '))}<br>Contact : ${E(c.ct)}<br>E-mails : ${E((c.em||[]).join(', '))}<br>Tél. : ${E((c.tel||[]).map(t=>t.n+(t.wa?' (WhatsApp)':'')).join(', '))}<br>Note : ${E(c.nt)}</p>
 <p><b>Facturé :</b> ${m(sum(l.map(i=>+i.montant||0)))} · <b>Impayé :</b> ${m(sum(l.map(rest)))}</p>
-<table><tr><th>N°</th><th>Reste</th><th>Statut</th><th></th></tr>${l.map(i=>`<tr class="${rc(icl(i))}"><td>${E(i.num)}</td><td>${m(rest(i))}</td><td>${status(i)}</td><td><button class="sm red" onclick="fRel('${i.id}')">Relancer</button></td></tr>`).join('')}</table>
+<table><tr><th>N°</th><th>Reste</th><th>Statut</th><th></th></tr>${l.map(i=>`<tr class="${rest(i)<=0?'rP':rc(icl(i))}"><td>${E(i.num)}</td><td>${m(rest(i))}</td><td>${stB(i)}</td><td><button class="sm red" onclick="fRel('${i.id}')">Relancer</button></td></tr>`).join('')}</table>
 <button class="sec" onclick="closeM()">Fermer</button>`)}
 function v_cl(){const l=S.clients.filter(c=>(!cf||ccl(c.id)===cf)&&(!q||c.rs.toLowerCase().includes(q.toLowerCase())));
 return `<div class="card"><div class="xl"><button onclick="exp('C')"><i>⬇</i>Exporter Excel</button><label class="bt"><i>⬆</i>Importer Excel<input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="impF(this.files[0],'Clients');this.value=''"></label><button onclick="modele('C')"><i>📄</i>Modèle</button></div><h2>Clients ${cf?'– classe '+cf:''}</h2><button onclick="fClient()">+ Nouveau client</button><div id="pv">${pvH}</div>${cf?'<button class="sec" onclick="cf=\'\';render()">Tous</button>':''}
@@ -141,8 +145,8 @@ await db.doc('invoices/'+(id||db.collection('invoices').doc().id)).set(d);closeM
 function v_inv(){const l=invF().filter(i=>!q||(i.num+cname(i.client)).toLowerCase().includes(q.toLowerCase())).sort((a,b)=>late(b)-late(a));
 return `<div class="card"><div class="xl"><button onclick="exp('F')"><i>⬇</i>Exporter Excel</button><label class="bt"><i>⬆</i>Importer Excel<input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="impF(this.files[0],'Factures');this.value=''"></label><button onclick="modele('F')"><i>📄</i>Modèle</button></div><h2>Factures</h2><button onclick="fInv()">+ Nouvelle facture</button><div id="pv">${pvH}</div>${fsel()}
 <input placeholder="Rechercher…" value="${E(q)}" id="qs" oninput="q=this.value;render()" style="max-width:300px;display:inline-block">
-<table><tr><th>N°</th><th>Client</th><th>Cellule</th><th>Échéance</th><th>Reste dû</th><th>Retard</th><th>Statut</th><th></th></tr>${l.map(i=>`<tr class="${rc(icl(i))}"><td>${E(i.num)}${i.tech?'<br><small>Tech. : '+E(i.tech)+'</small>':''}${'<br><small>Rapport signé : '+E(i.rapport||'Non')+'</small>'}</td><td>${E(cname(i.client))}</td><td>${E(i.cell)}</td><td>${fd(i.echeance)}</td><td>${m(rest(i))}</td><td>${late(i)>0?late(i)+' j':''}</td><td>${status(i)}</td>
-<td><button class="sm red" onclick="fRel('${i.id}')">Relancer</button><button class="sm sec" onclick="hist('${i.id}')">Historique</button>${admin?`<button class="sm sec" onclick="fInv('${i.id}')">Modifier</button><button class="sm red" onclick="del('invoices','${i.id}')">Suppr.</button>`:''}</td></tr>`).join('')}</table></div>`}
+<table><tr><th>N°</th><th>Client</th><th>Cellule</th><th>Échéance</th><th>Reste dû</th><th>Retard</th><th>Statut</th><th></th></tr>${l.map(i=>`<tr class="${rest(i)<=0?'rP':rc(icl(i))}"><td>${E(i.num)}${i.tech?'<br><small>Tech. : '+E(i.tech)+'</small>':''}${'<br><small>Rapport signé : '+E(i.rapport||'Non')+'</small>'}</td><td>${E(cname(i.client))}</td><td>${E(i.cell)}</td><td>${fd(i.echeance)}</td><td>${m(rest(i))}</td><td>${late(i)>0?late(i)+' j':''}</td><td>${stB(i)}</td>
+<td>${rest(i)>0?`<button class="sm red" onclick="fRel('${i.id}')">Relancer</button>${admin?`<button class="sm pay" onclick="payInv('${i.id}')">✔ Marquer payée</button>`:''}`:''}<button class="sm sec" onclick="hist('${i.id}')">Historique</button>${admin?`<button class="sm sec" onclick="fInv('${i.id}')">Modifier</button><button class="sm red" onclick="del('invoices','${i.id}')">Suppr.</button>`:''}</td></tr>`).join('')}</table></div>`}
 const fsel=()=>`<select style="max-width:200px;display:inline-block" onchange="flt=this.value;render()"><option value="">Toutes cellules</option>${CELLS.map(c=>`<option ${c==flt?'selected':''}>${c}</option>`).join('')}</select>`;
 
 /* ---------- relances ---------- */
