@@ -44,6 +44,7 @@ input,select,textarea{width:100%;font:17px var(--f);color:#111;padding:9px;borde
 footer{position:fixed;left:0;right:0;bottom:0;background:#0a2a5c;border-top:1px solid #2a3a63;color:#fff;text-align:center;font-weight:900;padding:12px 8px calc(12px + env(safe-area-inset-bottom,0px));letter-spacing:1px;z-index:10}
 .lg span{display:inline-block;margin-right:14px}.lg i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:4px;vertical-align:middle}
 .err{color:var(--r);font-weight:700}
+.ro{background:#e8eef8;color:#0a2a5c;font-weight:700;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:15px}
 .alG{background:#1e9e45;color:#fff;border:2px solid #fff}.gB{display:inline-block;background:#1e9e45;color:#fff;font-weight:800;font-size:13px;border-radius:6px;padding:2px 8px;margin-top:4px}.gS{color:#1e7d34;font-weight:700}tr.rG td{background:#dcf5e3}button.gr{background:#1e9e45}
 .hi{overflow-x:auto}.hi h2{color:#D40005}.hi p,.hi td{color:#000;font-weight:600}.hi table{min-width:0;border:2px solid #D40005}.hi th{background:#D40005;color:#000;font-weight:900}.hi td{background:#ffe1e1;border-bottom:1px solid #f3a3a3}.hi tr:nth-child(odd) td{background:#ffd0d0}button.hb{background:#D40005;color:#000;font-weight:900}
 .yb{display:inline-block;color:#fff;font-weight:800;border-radius:8px;padding:4px 10px}.ct{min-width:560px}.ct td{border-bottom:1px solid #fff}.ct tr.tt td{color:#fff;font-weight:900;font-size:17px}.yc h2{font-size:21px}
@@ -94,7 +95,7 @@ function rap(i){if(rest(i)<=0)return null;const l=S.relances.filter(r=>r.inv===i
 const raps=()=>S.invoices.map(i=>({i,r:rap(i)})).filter(x=>x.r).sort((a,b)=>a.r.d.localeCompare(b.r.d));
 const rapB=i=>{const r=rap(i);if(!r)return'';const t=today();return r.d<=t?`<br><span class="gB">🔔 Rappel ${r.d<t?'en retard ('+fd(r.d)+')':'aujourd’hui'}</span>`:`<br><small class="gS">🔔 Rappel le ${fd(r.d)}</small>`};
 function v_rap(){const t=today(),L=raps(),due=L.filter(x=>x.r.d<=t),next=L.filter(x=>x.r.d>t);
-const row=x=>`<tr class="${x.r.d<=t?'rG':''}"><td><b>${fd(x.r.d)}</b></td><td>${E(x.i.num)}</td><td>${E(cname(x.i.client))}</td><td>${m(rest(x.i))}</td><td>${E(x.r.note||'')}</td><td><button class="sm gr" onclick="fRel('${x.i.id}')">Relancer</button></td></tr>`;
+const row=x=>`<tr class="${x.r.d<=t?'rG':''}"><td><b>${fd(x.r.d)}</b></td><td>${E(x.i.num)}</td><td>${E(cname(x.i.client))}</td><td>${m(rest(x.i))}</td><td>${E(x.r.note||'')}</td><td>${admin?`<button class="sm gr" onclick="fRel('${x.i.id}')">Relancer</button>`:''}</td></tr>`;
 const tb=l=>l.length?`<table><tr><th>Rappel</th><th>Facture</th><th>Client</th><th>Reste dû</th><th>Dernière note</th><th></th></tr>${l.map(row).join('')}</table>`:'<p>Aucun rappel.</p>';
 return `<div class="card"><h2 style="color:#1e7d34">🔔 Rappels à traiter (${due.length})</h2><p style="font-size:15px">Un rappel disparaît dès qu’une nouvelle relance est enregistrée sur la facture, ou quand la facture est payée.</p>${tb(due)}</div><div class="card"><h2>Rappels à venir (${next.length})</h2>${tb(next)}</div>`}
 const stB=i=>rest(i)<=0?`<span class="pB">✔ PAYÉE</span>${i.datePaiement?'<br><small>le '+fd(i.datePaiement)+'</small>':''}`:status(i)+rapB(i);
@@ -120,7 +121,7 @@ const sel=(i,l,o,v)=>`<label>${l}<select id="f_${i}">${o.map(x=>`<option value="
 const v=i=>$('#f_'+i).value.trim();
 
 /* ---------- clients ---------- */
-function fClient(id){if(id&&!admin)return alert('Modification réservée à l’administrateur.');const c=S.clients.find(x=>x.id===id)||{};
+function fClient(id){if(!admin)return alert('Modification réservée à l’administrateur.');const c=S.clients.find(x=>x.id===id)||{};
 modal(`<h2>${id?'Modifier':'Nouveau'} client</h2>${inp('rs','Raison sociale',c.rs)}${inp('mf','Matricule fiscal',c.mf)}${inp('rue','Rue',c.rue)}
 <div class="g">${inp('ville','Ville',c.ville)}${inp('cp','Code postal',c.cp)}${inp('pays','Pays',c.pays||'Tunisie')}</div>
 ${ta('em','E-mails (un par ligne)',(c.em||[]).join('\n'))}${ta('tel','Téléphones (un par ligne, ajouter « wa » à la fin si WhatsApp)',(c.tel||[]).map(t=>t.n+(t.wa?' wa':'')).join('\n'))}
@@ -134,16 +135,16 @@ await db.doc('clients/'+(id||db.collection('clients').doc().id)).set(d);closeM()
 function vClient(id){const c=S.clients.find(x=>x.id===id),l=S.invoices.filter(i=>i.client===id);
 modal(`<h2>${E(c.rs)} ${bd(ccl(id))}</h2><p>MF : ${E(c.mf)}<br>${E([c.rue,c.cp,c.ville,c.pays].filter(Boolean).join(', '))}<br>Contact : ${E(c.ct)}<br>E-mails : ${E((c.em||[]).join(', '))}<br>Tél. : ${E((c.tel||[]).map(t=>t.n+(t.wa?' (WhatsApp)':'')).join(', '))}<br>Note : ${E(c.nt)}</p>
 <p><b>Facturé :</b> ${m(sum(l.map(i=>+i.montant||0)))} · <b>Impayé :</b> ${m(sum(l.map(rest)))}</p>
-<table><tr><th>N°</th><th>Reste</th><th>Statut</th><th></th></tr>${l.map(i=>`<tr class="${rest(i)<=0?'rP':rc(icl(i))}"><td>${E(i.num)}</td><td>${m(rest(i))}</td><td>${stB(i)}</td><td><button class="sm red" onclick="fRel('${i.id}')">Relancer</button></td></tr>`).join('')}</table>
+<table><tr><th>N°</th><th>Reste</th><th>Statut</th><th></th></tr>${l.map(i=>`<tr class="${rest(i)<=0?'rP':rc(icl(i))}"><td>${E(i.num)}</td><td>${m(rest(i))}</td><td>${stB(i)}</td><td>${admin?`<button class="sm red" onclick="fRel('${i.id}')">Relancer</button>`:''}</td></tr>`).join('')}</table>
 <button class="sec" onclick="closeM()">Fermer</button>`)}
 function v_cl(){const l=S.clients.filter(c=>(!cf||ccl(c.id)===cf)&&(!q||c.rs.toLowerCase().includes(q.toLowerCase())));
-return `<div class="card"><div class="xl"><button onclick="exp('C')"><i>⬇</i>Exporter Excel</button><label class="bt"><i>⬆</i>Importer Excel<input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="impF(this.files[0],'Clients');this.value=''"></label><button onclick="modele('C')"><i>📄</i>Modèle</button></div><h2>Clients ${cf?'– classe '+cf:''}</h2><button onclick="fClient()">+ Nouveau client</button><div id="pv">${pvH}</div>${cf?'<button class="sec" onclick="cf=\'\';render()">Tous</button>':''}
+return `<div class="card"><div class="xl"><button onclick="exp('C')"><i>⬇</i>Exporter Excel</button>${admin?`<label class="bt"><i>⬆</i>Importer Excel<input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="impF(this.files[0],'Clients');this.value=''"></label><button onclick="modele('C')"><i>📄</i>Modèle</button>`:''}</div><h2>Clients ${cf?'– classe '+cf:''}</h2>${admin?`<button onclick="fClient()">+ Nouveau client</button>`:''}<div id="pv">${pvH}</div>${cf?'<button class="sec" onclick="cf=\'\';render()">Tous</button>':''}
 <input placeholder="Rechercher…" value="${E(q)}" id="qs" oninput="q=this.value;render()" style="max-width:300px;display:inline-block">
 <table><tr><th>Client</th><th>Classe</th><th>Facturé</th><th>Impayé</th><th></th></tr>${l.map(c=>{const k=ccl(c.id),x=S.invoices.filter(i=>i.client===c.id);
 return `<tr class="${rc(k)}"><td>${E(c.rs)}</td><td>${bd(k)}</td><td>${m(sum(x.map(i=>+i.montant||0)))}</td><td>${m(sum(x.map(rest)))}</td><td><button class="sm" onclick="vClient('${c.id}')">Voir</button>${admin?`<button class="sm sec" onclick="fClient('${c.id}')">Modifier</button><button class="sm red" onclick="del('clients','${c.id}')">Suppr.</button>`:''}</td></tr>`}).join('')}</table></div>`}
 
 /* ---------- factures ---------- */
-function fInv(id){if(id&&!admin)return alert('Modification réservée à l’administrateur.');if(!S.clients.length)return alert('Créez d’abord un client.');const i=S.invoices.find(x=>x.id===id)||{};
+function fInv(id){if(!admin)return alert('Modification réservée à l’administrateur.');if(!S.clients.length)return alert('Créez d’abord un client.');const i=S.invoices.find(x=>x.id===id)||{};
 modal(`<h2>${id?'Modifier':'Nouvelle'} facture</h2>${sel('cl','Client',S.clients.map(c=>[c.id,c.rs]),i.client)}${sel('ce','Cellule TMF (obligatoire)',CELLS.map(c=>[c,c]),i.cell)}
 ${inp('num','N° de facture',i.num)}<div class="g">${inp('dt','Date',i.date||today(),'date')}${inp('ec','Échéance',i.echeance,'date')}</div>
 <div class="g">${inp('mt','Montant (TND)',i.montant,'number')}${inp('pa','Montant payé',i.paye||0,'number')}</div>
@@ -154,10 +155,10 @@ async function svInv(id){if(!v('num')||!v('dt')||!(+v('mt')>0))return alert('N°
 const d={client:v('cl'),cell:v('ce'),num:v('num'),date:v('dt'),echeance:v('ec')||v('dt'),montant:+v('mt'),paye:+v('pa')||0,nature:v('na'),rapport:v('rp'),tech:v('te'),avis:v('av')};
 await db.doc('invoices/'+(id||db.collection('invoices').doc().id)).set(d);closeM()}
 function v_inv(){const l=invF().filter(i=>!q||(i.num+cname(i.client)).toLowerCase().includes(q.toLowerCase())).sort((a,b)=>late(b)-late(a));
-return `<div class="card"><div class="xl"><button onclick="exp('F')"><i>⬇</i>Exporter Excel</button><label class="bt"><i>⬆</i>Importer Excel<input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="impF(this.files[0],'Factures');this.value=''"></label><button onclick="modele('F')"><i>📄</i>Modèle</button></div><h2>Factures</h2><button onclick="fInv()">+ Nouvelle facture</button><div id="pv">${pvH}</div>${fsel()}
+return `<div class="card"><div class="xl"><button onclick="exp('F')"><i>⬇</i>Exporter Excel</button>${admin?`<label class="bt"><i>⬆</i>Importer Excel<input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="impF(this.files[0],'Factures');this.value=''"></label><button onclick="modele('F')"><i>📄</i>Modèle</button>`:''}</div><h2>Factures</h2>${admin?`<button onclick="fInv()">+ Nouvelle facture</button>`:''}<div id="pv">${pvH}</div>${fsel()}
 <input placeholder="Rechercher…" value="${E(q)}" id="qs" oninput="q=this.value;render()" style="max-width:300px;display:inline-block">
 <table><tr><th>N°</th><th>Client</th><th>Cellule</th><th>Échéance</th><th>Reste dû</th><th>Retard</th><th>Statut</th><th></th></tr>${l.map(i=>`<tr class="${rest(i)<=0?'rP':rc(icl(i))}"><td>${E(i.num)}${i.tech?'<br><small>Tech. : '+E(i.tech)+'</small>':''}${'<br><small>Rapport signé : '+E(i.rapport||'Non')+'</small>'}</td><td>${E(cname(i.client))}</td><td>${E(i.cell)}</td><td>${fd(i.echeance)}</td><td>${m(rest(i))}</td><td>${late(i)>0?late(i)+' j':''}</td><td>${stB(i)}</td>
-<td>${rest(i)>0?`<button class="sm red" onclick="fRel('${i.id}')">Relancer</button>${admin?`<button class="sm pay" onclick="payInv('${i.id}')">✔ Marquer payée</button>`:''}`:''}<button class="sm hb" onclick="hist('${i.id}')">Historique</button>${admin?`<button class="sm sec" onclick="fInv('${i.id}')">Modifier</button><button class="sm red" onclick="del('invoices','${i.id}')">Suppr.</button>`:''}</td></tr>`).join('')}</table></div>`}
+<td>${rest(i)>0?`${admin?`<button class="sm red" onclick="fRel('${i.id}')">Relancer</button>`:''}${admin?`<button class="sm pay" onclick="payInv('${i.id}')">✔ Marquer payée</button>`:''}`:''}<button class="sm hb" onclick="hist('${i.id}')">Historique</button>${admin?`<button class="sm sec" onclick="fInv('${i.id}')">Modifier</button><button class="sm red" onclick="del('invoices','${i.id}')">Suppr.</button>`:''}</td></tr>`).join('')}</table></div>`}
 const fsel=()=>`<select style="max-width:200px;display:inline-block" onchange="flt=this.value;render()"><option value="">Toutes cellules</option>${CELLS.map(c=>`<option ${c==flt?'selected':''}>${c}</option>`).join('')}</select>`;
 
 /* ---------- relances ---------- */
@@ -174,7 +175,7 @@ const TY=[['Relance amicale n°1','Nous vous rappelons courtoisement que la fact
 ['Accusé de réception de paiement','Nous accusons réception de votre paiement relatif à la facture {num} et vous en remercions.']];
 function vars(i){return{rs:cname(i.client),num:i.num,mt:m(rest(i)||i.montant),ec:fd(i.echeance),j:Math.max(0,late(i))}}
 const fill=(s,x)=>s.replace(/\{(\w+)\}/g,(_,k)=>x[k]);
-function fRel(id){const i=S.invoices.find(x=>x.id===id),n=S.relances.filter(r=>r.inv===id).length;const t=rest(i)<=0?9:n<7?n:n==7?7:8;
+function fRel(id){if(!admin)return alert('Relances réservées à l’administrateur.');const i=S.invoices.find(x=>x.id===id),n=S.relances.filter(r=>r.inv===id).length;const t=rest(i)<=0?9:n<7?n:n==7?7:8;
 modal(`<h2>Relance – facture ${E(i.num)}</h2><p>${E(cname(i.client))} · reste ${m(rest(i))} · retard ${Math.max(0,late(i))} j · ${n} relance(s) déjà faite(s)</p>
 <label>Type<select id="r_t" onchange="chT('${id}')">${TY.map((x,k)=>`<option value="${k}" ${k==t?'selected':''}>${k+1}. ${x[0]}</option>`).join('')}</select></label>
 <label>Objet<input id="r_o"></label><label>Message (modifiable)<textarea id="r_x" rows="9"></textarea></label>
@@ -250,7 +251,7 @@ function exp(k){const wb=XLSX.utils.book_new();if(k!='F')XLSX.utils.book_append_
 function modele(k){const wb=XLSX.utils.book_new();if(k=='C')XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([{'Raison sociale':'SOCIETE EXEMPLE','Matricule fiscal':'1234567/A/M/000','Rue':'Rue de la Liberté','Ville':'Tunis','Code postal':'1000','Pays':'Tunisie','E-mails':'compta@exemple.tn;dg@exemple.tn','Téléphones':'71000000;98000000 wa','Contact':'M. Ben Ali','Note':''}]),'Clients');else XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([{'Client':'SOCIETE EXEMPLE','Cellule':'CARRIER','N° facture':'FA2026-001','Date':'15/10/2026','Échéance':'14/11/2026','Montant':1500,'Payé':0,'Nature':'Prestation + Pièces','Rapport signé':'Oui','Technicien':'Nom du technicien','Avis technique':''}]),'Factures');XLSX.writeFile(wb,k=='C'?'modele-clients.xlsx':'modele-factures.xlsx')}
 function pd(x){if(typeof x=='number')return new Date(Math.round((x-25569)*864e5)).toISOString().slice(0,10);x=String(x||'').trim();if(/^\d{4}-\d\d-\d\d/.test(x))return x.slice(0,10);const p=x.split('/');return p.length==3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:''}
 let pvH='';function setPv(h){pvH=h;const e=$('#pv');if(e)e.innerHTML=h}
-function impF(f,only){if(!f)return;const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'array'}),rows=n=>{const sh=wb.Sheets[n]||(only==n?wb.Sheets[wb.SheetNames[0]]:null);return sh?XLSX.utils.sheet_to_json(sh):[]},er=[],cl=[],iv=[],known=new Set(S.clients.map(c=>c.rs.toLowerCase()));
+function impF(f,only){if(!f||!admin)return;const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'array'}),rows=n=>{const sh=wb.Sheets[n]||(only==n?wb.Sheets[wb.SheetNames[0]]:null);return sh?XLSX.utils.sheet_to_json(sh):[]},er=[],cl=[],iv=[],known=new Set(S.clients.map(c=>c.rs.toLowerCase()));
 rows('Clients').forEach((x,k)=>{const rs=String(x['Raison sociale']||'').trim();if(!rs)return er.push('Clients ligne '+(k+2)+' : raison sociale vide');if(known.has(rs.toLowerCase()))return;known.add(rs.toLowerCase());
 cl.push({rs,mf:x['Matricule fiscal']||'',rue:x['Rue']||'',ville:x['Ville']||'',cp:x['Code postal']||'',pays:x['Pays']||'Tunisie',em:String(x['E-mails']||'').split(';').map(s=>s.trim()).filter(Boolean),tel:tels(String(x['Téléphones']||'').split(';').join('\n')),ct:x['Contact']||'',nt:x['Note']||''})});
 const nums=new Set(S.invoices.map(i=>nn(i.num)));let dup=0;
@@ -258,7 +259,7 @@ rows('Factures').forEach((x,k)=>{const c=String(x['Cellule']||'').toUpperCase().
 if(!CELLS.includes(c))return er.push('Factures ligne '+(k+2)+' : cellule invalide');if(!n||!(mt>0)||!pd(x['Date']))return er.push('Factures ligne '+(k+2)+' : n°, date ou montant invalide');if(!known.has(cn.toLowerCase()))return er.push('Factures ligne '+(k+2)+' : client inconnu');if(nums.has(nn(n))){dup++;return}nums.add(nn(n));
 iv.push({cn,cell:c,num:n,date:pd(x['Date']),echeance:pd(x['Échéance'])||pd(x['Date']),montant:mt,paye:+x['Payé']||0,nature:x['Nature']||'Prestation',rapport:x['Rapport signé']||'Non',tech:x['Technicien']||'',avis:x['Avis technique']||''})});
 pend={cl,iv};setPv(`<p><b>${cl.length}</b> nouveau(x) client(s), <b>${iv.length}</b> nouvelle(s) facture(s).${dup?` <br>${dup} facture(s) ignorée(s) : numéro déjà existant.`:''}</p>${er.length?'<p class="err">'+er.slice(0,15).map(E).join('<br>')+'</p>':''}<button onclick="okImp()">Valider l’import</button> <button class="sec" onclick="setPv('')">Annuler</button>`)};r.readAsArrayBuffer(f)}
-async function okImp(){const ids={};S.clients.forEach(c=>ids[c.rs.toLowerCase()]=c.id);for(const c of pend.cl){const r=db.collection('clients').doc();ids[c.rs.toLowerCase()]=r.id;await r.set(c)}
+async function okImp(){if(!admin)return;const ids={};S.clients.forEach(c=>ids[c.rs.toLowerCase()]=c.id);for(const c of pend.cl){const r=db.collection('clients').doc();ids[c.rs.toLowerCase()]=r.id;await r.set(c)}
 for(const i of pend.iv){const{cn,...d}=i;await db.collection('invoices').doc().set({...d,client:ids[cn.toLowerCase()]})}pend=null;setPv('<p><b>Import terminé ✅</b></p>')}
 
 /* ---------- affichage ---------- */
@@ -267,7 +268,7 @@ const go=k=>{tab=k;q='';pvH='';tg(0);render();scrollTo(0,0)};
 const V={rap:v_rap,cls:v_cls,dash:v_dash,cl:v_cl,inv:v_inv,clo:v_clo,io:v_io};
 function render(){if(!db||!user)return vLogin();
 if(document.activeElement&&document.activeElement.tagName=='INPUT'&&document.activeElement.type=='file')return;
-document.body.classList.add('in');$('#app').innerHTML=`<div class="lay"><div id="scrim" onclick="tg(0)"></div><nav><div class="nh">Menu<button onclick="tg(0)" aria-label="Fermer">✕</button></div>${[['dash','📊','Tableau de bord'],['cl','👥','Clients'],['inv','🧾','Factures'],['rap','🔔','Rappels'+(()=>{const n=raps().filter(x=>x.r.d<=today()).length;return n?' ('+n+')':''})()],['cls','🏅','Classement clients'],['clo','📅','Clôture'],['acc','👤','Mon compte']].map(([k,ic,l])=>`<button class="it ${tab==k?'on':''}" onclick="go('${k}')"><i>${ic}</i>${l}</button>`).join('')}</nav><main>${V[tab]()}</main></div>`;const e=$('#qs');if(e&&q){e.focus();e.setSelectionRange(q.length,q.length)}}
+document.body.classList.add('in');$('#app').innerHTML=`<div class="lay"><div id="scrim" onclick="tg(0)"></div><nav><div class="nh">Menu<button onclick="tg(0)" aria-label="Fermer">✕</button></div>${[['dash','📊','Tableau de bord'],['cl','👥','Clients'],['inv','🧾','Factures'],['rap','🔔','Rappels'+(()=>{const n=raps().filter(x=>x.r.d<=today()).length;return n?' ('+n+')':''})()],['cls','🏅','Classement clients'],['clo','📅','Clôture'],['acc','👤','Mon compte']].map(([k,ic,l])=>`<button class="it ${tab==k?'on':''}" onclick="go('${k}')"><i>${ic}</i>${l}</button>`).join('')}</nav><main>${admin?'':'<div class="ro" id="ro">👁 Mode consultation : vous pouvez consulter les clients, factures, relances et tableaux, sans modification.</div>'}${V[tab]()}</main></div>`;const e=$('#qs');if(e&&q){e.focus();e.setSelectionRange(q.length,q.length)}}
 /* ---------- connexion / compte ---------- */
 const ERR={'auth/invalid-credential':'E-mail ou mot de passe incorrect.','auth/wrong-password':'Mot de passe incorrect.','auth/user-not-found':'Aucun compte avec cet e-mail. Cliquez sur « Créer un compte ».','auth/invalid-email':'Adresse e-mail invalide.','auth/email-already-in-use':'Ce compte existe déjà : connectez-vous, ou utilisez « Mot de passe oublié ».','auth/weak-password':'Mot de passe trop court (6 caractères minimum).','auth/too-many-requests':'Trop de tentatives. Patientez quelques minutes ou réinitialisez le mot de passe.','auth/network-request-failed':'Pas de connexion Internet.','auth/requires-recent-login':'Par sécurité, reconnectez-vous puis recommencez.','auth/missing-password':'Saisissez le mot de passe.'};
 const errMsg=e=>ERR[e&&e.code]||('Erreur : '+((e&&e.message)||e));
@@ -292,19 +293,19 @@ V.acc=v_acc;
 
 /* ---------- utilisateurs (administrateurs) ---------- */
 let roleMe=null;
-const ROLES={admin:'Administrateur',user:'Utilisateur'};
+const ROLES={admin:'Administrateur',user:'Consultation',bloque:'Bloqué'};
 function v_users(){const l=[...S.roles].sort((a,b)=>a.id.localeCompare(b.id));
-return `<div class="card"><h2>Utilisateurs</h2><p>Ajoutez l’e-mail d’un collègue et son rôle. Il ouvre ensuite l’application et appuie sur <b>Créer un compte</b> avec cet e-mail pour choisir son mot de passe.</p>
-<div class="g">${inp('ue','E-mail du collègue','','email')}${sel('ur','Rôle',[['user','Utilisateur (consultation, ajout, relances)'],['admin','Administrateur (tous les droits)']],'user')}</div>
+return `<div class="card"><h2>Utilisateurs</h2><p>Vos collègues en <b>@tmf.com.tn</b> peuvent créer leur compte eux-mêmes : ils arrivent en <b>Consultation</b> (lecture seule). Ici, vous pouvez les passer <b>Administrateur</b>, les <b>bloquer</b>, ou ajouter une adresse d’un autre domaine.</p>
+<div class="g">${inp('ue','E-mail du collègue','','email')}${sel('ur','Rôle',[['user','Consultation (lecture seule)'],['admin','Administrateur (tous les droits)']],'user')}</div>
 <button onclick="addU()">+ Ajouter l’utilisateur</button><div id="um"></div>
 <table><tr><th>E-mail</th><th>Rôle</th><th></th></tr><tr><td>${E(ADMINS[0])}</td><td><b>Administrateur principal</b></td><td></td></tr>
-${l.filter(r=>!ADMINS.includes(r.id)).map(r=>`<tr><td>${E(r.id)}</td><td><select onchange="setU('${E(r.id)}',this.value)">${Object.entries(ROLES).map(([k,v])=>`<option value="${k}" ${r.role==k?'selected':''}>${v}</option>`).join('')}</select></td><td><button class="sm red" onclick="delU('${E(r.id)}')">Retirer</button></td></tr>`).join('')}</table></div>`}
+${l.filter(r=>!ADMINS.includes(r.id)).map(r=>`<tr><td>${E(r.id)}</td><td><select onchange="setU('${E(r.id)}',this.value)">${Object.entries(ROLES).map(([k,v])=>`<option value="${k}" ${r.role==k?'selected':''}>${v}</option>`).join('')}</select></td><td><button class="sm red" onclick="delU('${E(r.id)}')">Bloquer</button></td></tr>`).join('')}</table></div>`}
 async function addU(){const e=v('ue').toLowerCase(),r=v('ur');if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))return $('#um').innerHTML='<p class="err">Adresse e-mail invalide.</p>';
 if(ADMINS.includes(e)||S.roles.some(x=>x.id===e))return $('#um').innerHTML='<p class="err">Cet utilisateur existe déjà.</p>';
 await db.doc('roles/'+e).set({role:r,by:user.email,at:new Date().toISOString()})}
 async function setU(e,r){await db.doc('roles/'+e).set({role:r,by:user.email,at:new Date().toISOString()},{merge:true})}
-async function delU(e){if(confirm('Retirer l’accès de '+e+' ?'))await db.doc('roles/'+e).delete()}
-function vRefus(){document.body.classList.remove('in','mo');$('#app').innerHTML=`<div class="card" style="max-width:440px;margin:24px auto"><h2>Accès non autorisé</h2><p>Le compte <b>${E(user.email)}</b> n’a pas encore été ajouté par un administrateur.</p><p>Demandez à l’administrateur de vous ajouter dans <b>Mon compte → Utilisateurs</b>, puis reconnectez-vous.</p><button class="red" onclick="firebase.auth().signOut()">Se déconnecter</button></div>`}
+async function delU(e){if(confirm('Bloquer l’accès de '+e+' ?'))await db.doc('roles/'+e).set({role:'bloque',by:user.email,at:new Date().toISOString()})}
+function vRefus(){document.body.classList.remove('in','mo');$('#app').innerHTML=`<div class="card" style="max-width:440px;margin:24px auto"><h2>Accès non autorisé</h2><p>Le compte <b>${E(user.email)}</b> n’a pas accès (adresse hors @tmf.com.tn, ou accès bloqué).</p><p>Demandez à l’administrateur de vous ajouter dans <b>Mon compte → Utilisateurs</b>, puis reconnectez-vous.</p><button class="red" onclick="firebase.auth().signOut()">Se déconnecter</button></div>`}
 /* ---------- démarrage ---------- */
 let UN=[];
 function sub(n,k){UN.push(db.collection(n).onSnapshot(s=>{S[k]=s.docs.map(d=>({id:d.id,...d.data()}));L++;render();autoArch()},e=>{console.error(e);if(e.code=='permission-denied'&&n!='roles')alert('Accès refusé par la base de données : vérifiez les règles Firestore.')}))}
@@ -318,6 +319,6 @@ const em=(u.email||'').toLowerCase();me=u.email;lmsg=lok='';let started=false;
 const start=()=>{if(started)return;started=true;sub('clients','clients');sub('invoices','invoices');sub('relances','relances');sub('clotures','clotures');
 UN.push(db.doc('config/seuils').onSnapshot(s=>{if(s.exists)S.cfg=s.data();render()},()=>{}));if(admin)sub('roles','roles');render()};
 if(ADMINS.includes(em)){admin=true;start();return}
-UN.push(db.doc('roles/'+em).onSnapshot(d=>{if(!d.exists){admin=false;return vRefus()}const was=admin;admin=d.data().role=='admin';if(started&&was!==admin){location.reload();return}start();render()},()=>vRefus()))})})();
+UN.push(db.doc('roles/'+em).onSnapshot(d=>{if(!d.exists){admin=false;if(em.endsWith(DOMAINE)){db.doc('roles/'+em).set({role:'user',auto:true,at:new Date().toISOString()}).catch(()=>vRefus());return}return vRefus()}if(d.data().role=='bloque'){admin=false;return vRefus()}const was=admin;admin=d.data().role=='admin';if(started&&was!==admin){location.reload();return}start();render()},()=>vRefus()))})})();
 if('serviceWorker' in navigator){let rl=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!rl){rl=true;location.reload()}});navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{r.update();document.addEventListener('visibilitychange',()=>{if(!document.hidden)r.update()})}).catch(()=>{})}
 </script></body></html>
